@@ -17,11 +17,11 @@ class PackageData(BaseModel):
     dimensions: Dict[str, float]
     recyclable: bool
 
-    @validator('weight')
-    def validate_weight(cls, v):
-        if v <= 0:
-            raise ValueError('Weight must be positive')
-        return v
+    # @validator('weight')
+    # def validate_weight(cls, v):
+    #     if v <= 0:
+    #         raise ValueError('Weight must be positive')
+    #     return v
 
 class ShipmentData(BaseModel):
     shipment_id: str
@@ -217,6 +217,58 @@ class LogisticsSustainabilityPipeline:
             'seasonal_patterns': self._identify_seasonal_patterns(data),
             'anomalies': self._detect_anomalies(data)
         }
+    
+    def _can_optimize_route(self, data: Dict) -> bool:
+        """
+        Check if route can be optimized
+        This needs to be improved
+        """
+        # Example optimization check 
+        # You could add more complex logic here
+        distance = self._calculate_distance(data['origin'], data['destination'])
+        return distance > 500  # Example: suggest optimization for routes over 500 km
+
+    def _can_optimize_packaging(self, data: Dict) -> bool:
+        """
+        Check if packaging can be optimized.
+        This also needs to be improved
+        """
+        # Check packaging efficiency
+        packages = data.get('packages', [])
+        
+        # Example checks:
+        # 1. Check if any non-recyclable packages exist
+        non_recyclable_packages = [p for p in packages if not p.get('recyclable', False)]
+        
+        # 2. Check if packages are inefficiently sized
+        oversized_packages = [p for p in packages if any(
+            dim > 50 for dim in p.get('dimensions', {}).values()
+        )]
+        
+        return bool(non_recyclable_packages or oversized_packages)
+
+    def _identify_seasonal_patterns(self, data: Dict) -> Dict:
+        """
+        TODO
+        """
+        return {
+            'season': 'Not implemented',
+            'patterns': []
+        }
+
+    def _detect_anomalies(self, data: Dict) -> List:
+        """
+        TODO
+        """
+        return []
+
+    def _compare_historical_data(self, data: Dict) -> Dict:
+        """
+        TODO
+        """
+        return {
+            'comparison_status': 'Not implemented'
+        }
 
 # Example Usage
 async def run_pipeline():
@@ -260,3 +312,19 @@ async def run_pipeline():
     # Process data
     result = await pipeline.process_data(sample_data)
     return result
+
+import asyncio
+
+if __name__ == "__main__":
+    async def main():
+        # Run the pipeline
+        result = await run_pipeline()
+        
+        # Print the results
+        print("Pipeline Processing Result:")
+        print("------------------------")
+        for key, value in result.items():
+            print(f"{key}: {value}")
+
+    # Run the async main function
+    asyncio.run(main())
