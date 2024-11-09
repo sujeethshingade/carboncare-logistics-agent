@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Paperclip, ArrowUp, RefreshCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,7 @@ export const Hero = () => {
     const [messages, setMessages] = useState<{ text: string; type: 'user' | 'agent' }[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messageContainerRef = useRef<HTMLDivElement>(null);
 
     const sustainabilityTopics: ChatTopic[] = [
         {
@@ -56,6 +56,12 @@ export const Hero = () => {
         setMessages([]);
     };
 
+    useEffect(() => {
+        if (messageContainerRef.current) {
+            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
+
     return (
         <div className="container py-16">
             <div className="max-w-6xl mx-auto space-y-4">
@@ -89,9 +95,12 @@ export const Hero = () => {
                     </CardHeader>
                     <CardContent className="p-6">
                         <div className="h-[500px] flex flex-col">
-                            <div className="flex-grow text-white overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                            <div 
+                                ref={messageContainerRef}
+                                className="flex-grow text-white overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent scroll-smooth"
+                            >
                                 {messages.length === 0 ? (
-                                    <div className="text-center flex items-center justify-center">
+                                    <div className="text-center flex items-center justify-center h-full">
                                         Upload a document or Start a conversation...
                                     </div>
                                 ) : (
@@ -102,7 +111,7 @@ export const Hero = () => {
                                         >
                                             <div
                                                 className={`p-3 rounded-sm ${message.type === 'user' ? 'bg-primary text-right' : 'bg-primary text-left'}`}
-                                                style={{ wordWrap: 'break-word', display: 'inline-block', maxWidth: '60%' }}
+                                                style={{ wordWrap: 'break-word', display: 'inline-block', maxWidth: '70%' }}
                                             >
                                                 {message.type === 'agent' ? (
                                                     <ReactMarkdown>
@@ -115,9 +124,7 @@ export const Hero = () => {
                                         </div>
                                     ))
                                 )}
-                                <div ref={messagesEndRef} />
                             </div>
-
                             <div className="mt-4 relative">
                                 <input
                                     type="text"
