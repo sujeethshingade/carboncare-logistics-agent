@@ -28,6 +28,8 @@ export default {
     extend: {
       colors: {
         'scroll-color': '#0a0a0a',
+        'primary': '#00BF63',
+        'secondary': '#FFCE57',
       },
     },
   },

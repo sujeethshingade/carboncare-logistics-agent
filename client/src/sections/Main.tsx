@@ -39,26 +39,24 @@ export const Main = () => {
         <section ref={sectionRef}>
             <div className="container py-16">
                 <div className="max-w-6xl mx-auto space-y-4">
-                    <motion.div className="border border-white/15 py-24 rounded-xl overflow-hidden relative group min-h-[600px]"
+                    <motion.div className="border border-white py-24 overflow-hidden relative group min-h-[600px]"
                         style={{
                             backgroundPositionY,
                         }}>
-                        <div className="absolute inset-0 bg-green-700 bg-blend-overlay [mask-image:radial-gradient(50%_50%_at_50%_35%,black,transparent)] group-hover:opacity-0 transition duration-700"
+                        <div className="absolute inset-0 bg-primary bg-blend-overlay [mask-image:radial-gradient(50%_50%_at_50%_35%,black,transparent)] group-hover:opacity-0 transition duration-700"
                             style={{
                                 backgroundImage: `url(${gridLines.src})`,
                             }}>
                         </div>
-                        <motion.div ref={borderedDivRef} className="absolute inset-0 bg-green-700 bg-blend-overlay opacity-0 group-hover:opacity-100 transition duration-700"
+                        <motion.div ref={borderedDivRef} className="absolute inset-0 bg-primary bg-blend-overlay opacity-0 group-hover:opacity-100 transition duration-700"
                             style={{
                                 maskImage,
                                 backgroundImage: `url(${gridLines.src})`,
                             }}>
                         </motion.div>
                         <div className="relative">
-                            <h2 className="text-4xl md:text-5xl max-w-lg mx-auto text-center tracking-tighter font-medium">CarbonCare. Chatbot for a Greener Tomorrow!</h2>
-                            <Spline
-                                scene="https://prod.spline.design/UlZ9qLrac0IAUv3a/scene.splinecode"
-                            />
+                            <h2 className="text-4xl md:text-5xl max-w-lg mx-auto text-center tracking-tighter font-medium">Optimize Your Carbon Footprint, Effortlessly.</h2>
+                            <Spline scene="https://prod.spline.design/UlZ9qLrac0IAUv3a/scene.splinecode" />
                         </div>
                     </motion.div>
                 </div>

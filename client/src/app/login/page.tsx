@@ -1,6 +1,8 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
+import Logo from '@/assets/logo.png';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -35,36 +37,50 @@ const LoginPage = () => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen">
-            <h1 className="text-3xl font-bold mb-6">Login</h1>
-            <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 w-96" onSubmit={handleLogin}>
+            <div className="flex items-center justify-center">
+                <Image
+                    src={Logo}
+                    alt="CarbonCare Logo"
+                    width={50}
+                    height={50}
+                    className="mr-2 py-4"
+                    priority
+                />
+                <h1 className="text-2xl font-bold mb-0">
+                    <Link href="/">
+                        CarbonCare
+                    </Link>
+                </h1>
+            </div>
+            <form className="border px-8 pt-6 pb-8 mb-4 w-96" onSubmit={handleLogin}>
                 {error && (
                     <div className="mb-4 text-red-500 text-sm text-center">
                         {error}
                     </div>
                 )}
                 <div className="mb-4">
-                    <label className="block text-black text-sm font-bold mb-2" htmlFor="email">
+                    <label className="block text-white text-sm font-bold mb-2" htmlFor="email">
                         Email
                     </label>
                     <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:shadow-outline"
+                        className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
                         id="email"
                         type="email"
-                        placeholder="Email"
+                        placeholder="enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block text-black text-sm font-bold mb-2" htmlFor="password">
+                    <label className="block text-white text-sm font-bold mb-2" htmlFor="password">
                         Password
                     </label>
                     <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:shadow-outline"
+                        className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
                         id="password"
                         type="password"
-                        placeholder="Password"
+                        placeholder="enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -72,7 +88,7 @@ const LoginPage = () => {
                 </div>
                 <div className="flex items-center justify-center py-2">
                     <button
-                        className="bg-green-700 hover:bg-green-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+                        className="bg-black hover:text-primary text-white border font-bold py-2 px-4 focus:outline-none focus:shadow-outline disabled:opacity-50"
                         type="submit"
                         disabled={loading}
                     >
@@ -81,7 +97,7 @@ const LoginPage = () => {
                 </div>
                 <p className="text-gray-400 text-sm pt-2 text-center">
                     Don&apos;t have an account?{' '}
-                    <Link href="/signup" className="text-green-700 hover:underline">
+                    <Link href="/signup" className="text-primary hover:underline">
                         Signup
                     </Link>
                 </p>

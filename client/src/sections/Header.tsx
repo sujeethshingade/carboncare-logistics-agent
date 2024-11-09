@@ -26,23 +26,23 @@ export const Header = () => {
                         className="mr-2 mb-2"
                         priority
                     />
-                    <h1 className="text-2xl font-bold">
+                    <h1 className="text-xl md:text-2xl font-bold">
                         <Link href="/">
                             CarbonCare
                         </Link>
                     </h1>
                 </div>
                 <nav>
-                    <ul className="flex space-x-6 font-semibold">
+                    <ul className="flex space-x-4 md:space-x-6 font-semibold">
                         {!user ? (
                             <>
                                 <li>
-                                    <Link href="/signup" className="hover:text-gray-400">
+                                    <Link href="/signup" className="text-sm md:text-base hover:text-primary">
                                         Signup
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/login" className="hover:text-gray-400">
+                                    <Link href="/login" className="text-sm md:text-base hover:text-primary">
                                         Login
                                     </Link>
                                 </li>
@@ -52,7 +52,7 @@ export const Header = () => {
                                 <li>
                                     <button
                                         onClick={handleSignOut}
-                                        className="hover:text-gray-400"
+                                        className="text-sm md:text-base hover:text-primary"
                                     >
                                         Logout
                                     </button>
