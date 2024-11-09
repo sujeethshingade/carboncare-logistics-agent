@@ -157,17 +157,17 @@ class LogisticsSustainabilityPipeline:
 
     def _calculate_resource_efficiency(self, data: Dict) -> float:
         """Calculate resource efficiency score"""
-        # TO DO: Implementation 
+        # TODO: Implementation 
         return 0.0
 
     def _calculate_waste_reduction(self, data: Dict) -> float:
         """Calculate waste reduction metrics"""
-        # TO DO: Implementation 
+        # TODO: Implementation 
         return 0.0
 
     def _calculate_energy_efficiency(self, data: Dict) -> float:
         """Calculate energy efficiency metrics"""
-        # TO DO: Implementation 
+        # TODO: Implementation 
         return 0.0
 
     def _calculate_distance(self, origin: Dict[str, float], destination: Dict[str, float]) -> float:
@@ -246,7 +246,7 @@ class LogisticsSustainabilityPipeline:
         )]
         
         return bool(non_recyclable_packages or oversized_packages)
-
+    
     def _identify_seasonal_patterns(self, data: Dict) -> Dict:
         """
         TODO
@@ -269,6 +269,7 @@ class LogisticsSustainabilityPipeline:
         return {
             'comparison_status': 'Not implemented'
         }
+
 
 # Example Usage
 async def run_pipeline():
