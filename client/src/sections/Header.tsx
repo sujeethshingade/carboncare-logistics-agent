@@ -37,12 +37,12 @@ export const Header = () => {
                         {!user ? (
                             <>
                                 <li>
-                                    <Link href="/signup" className="text-sm md:text-base hover:text-primary">
+                                    <Link href="/signup" className="text-sm md:text-base hover:text-primary transition-colors duration-300">
                                         Signup
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/login" className="text-sm md:text-base hover:text-primary">
+                                    <Link href="/login" className="text-sm md:text-base hover:text-primary transition-colors duration-300">
                                         Login
                                     </Link>
                                 </li>
@@ -52,7 +52,7 @@ export const Header = () => {
                                 <li>
                                     <button
                                         onClick={handleSignOut}
-                                        className="text-sm md:text-base hover:text-primary"
+                                        className="text-sm md:text-base hover:text-primary transition-colors duration-300"
                                     >
                                         Logout
                                     </button>
