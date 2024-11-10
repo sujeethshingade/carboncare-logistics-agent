@@ -202,25 +202,42 @@ export const Hero = () => {
     };
 
     const handleSendMessage = async () => {
-        if (!inputMessage.trim() || !currentSessionId || isLoading) return;
-
-        setIsLoading(true);
-
-        const newMessages = [
-            { text: inputMessage, type: 'user' as const },
-            { text: 'Error generating response.', type: 'agent' as const }
-        ];
-
-        setMessages(prev => [...prev, ...newMessages]);
-        setInputMessage('');
-
-        await saveMessagesToDatabase(newMessages);
-
-        if (messages.length === 0) {
-            await updateSessionTitle(inputMessage.slice(0, 50));
+        if (!inputMessage.trim() || isLoading) return;
+        
+        if (!currentSessionId) {
+            try {
+                await createNewSession();
+                if (!currentSessionId) {
+                    setError('Failed to create new session');
+                    return;
+                }
+            } catch (err) {
+                console.error('Error creating new session:', err);
+                return;
+            }
         }
-
-        setIsLoading(false);
+    
+        setIsLoading(true);
+    
+        try {
+            const newMessages = [
+                { text: inputMessage, type: 'user' as const },
+                { text: 'Error generating response.', type: 'agent' as const }
+            ];
+    
+            setMessages(prev => [...prev, ...newMessages]);
+            setInputMessage('');
+    
+            await saveMessagesToDatabase(newMessages);
+    
+            if (messages.length === 0) {
+                await updateSessionTitle(inputMessage.slice(0, 50));
+            }
+        } catch (err) {
+            console.error('Error handling message:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
