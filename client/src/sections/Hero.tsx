@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Paperclip, ArrowUp, RefreshCcw } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/supabase';
 import { Sidebar } from '@/sections/Sidebar';
 import { useRouter } from 'next/navigation';
@@ -19,7 +20,7 @@ export const Hero = () => {
     const [error, setError] = useState<string | null>(null);
     const [user, setUser] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const messageContainerRef = useRef<HTMLDivElement>(null);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
     const sustainabilityTopics: ChatTopic[] = [
@@ -41,6 +42,19 @@ export const Hero = () => {
         },
     ];
 
+    const scrollToBottom = () => {
+        if (scrollAreaRef.current) {
+            const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+            if (scrollElement) {
+                scrollElement.scrollTop = scrollElement.scrollHeight;
+            }
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
     useEffect(() => {
         const checkAuth = async () => {
             try {
@@ -53,7 +67,6 @@ export const Hero = () => {
                 await createNewSession();
             } catch (err) {
                 console.error('Auth error:', err);
-                setError('Authentication failed. Please login again.');
                 router.push('/login');
             }
         };
@@ -95,7 +108,6 @@ export const Hero = () => {
             setError(null);
         } catch (err) {
             console.error('Error creating session:', err);
-            setError('Failed to create new chat session. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -123,7 +135,6 @@ export const Hero = () => {
             );
         } catch (err) {
             console.error('Error fetching messages:', err);
-            setError('Failed to load chat messages. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -185,7 +196,6 @@ export const Hero = () => {
             setError(null);
         } catch (err) {
             console.error('Error processing topic:', err);
-            setError('Failed to process topic. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -237,17 +247,10 @@ export const Hero = () => {
 
         } catch (err) {
             console.error('Error uploading file:', err);
-            setError('Failed to upload file. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
-
-    useEffect(() => {
-        if (messageContainerRef.current) {
-            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
-        }
-    }, [messages]);
 
     const handleClearChat = async (event: React.MouseEvent<HTMLButtonElement>) => {
         try {
@@ -267,7 +270,6 @@ export const Hero = () => {
             setError(null);
         } catch (err) {
             console.error('Error clearing chat:', err);
-            setError('Failed to clear chat. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -299,8 +301,10 @@ export const Hero = () => {
                             ))}
                         </div>
                         <Card className="bg-black border rounded-none">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                                <CardTitle className="text-white text-lg font-semibold">CarbonCare Agent</CardTitle>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="text-white text-lg font-semibold">
+                                    CarbonCare Agent
+                                </CardTitle>
                                 <button
                                     onClick={handleClearChat}
                                     className="text-white hover:text-primary transition-colors duration-300 flex items-center gap-2"
@@ -312,36 +316,42 @@ export const Hero = () => {
                             </CardHeader>
                             <CardContent className="p-6">
                                 <div className="h-[500px] flex flex-col">
-                                    <div
-                                        ref={messageContainerRef}
-                                        className="flex-grow text-white overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent scroll-smooth"
-                                    >
-                                        {messages.length === 0 ? (
-                                            <div className="text-center flex items-center justify-center h-full">
-                                                Upload a document or Start a conversation...
-                                            </div>
-                                        ) : (
-                                            messages.map((message, index) => (
-                                                <div
-                                                    key={index}
-                                                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                                                >
-                                                    <div
-                                                        className={`p-3 rounded-sm ${message.type === 'user' ? 'bg-primary text-right' : 'bg-primary text-left'}`}
-                                                        style={{ wordWrap: 'break-word', display: 'inline-block', maxWidth: '70%' }}
-                                                    >
-                                                        {message.type === 'agent' ? (
-                                                            <ReactMarkdown>
-                                                                {message.text}
-                                                            </ReactMarkdown>
-                                                        ) : (
-                                                            message.text
-                                                        )}
-                                                    </div>
+                                    <ScrollArea ref={scrollAreaRef} className="flex-grow pr-4 -mr-4">
+                                        <div className="space-y-4">
+                                            {messages.length === 0 ? (
+                                                <div className="text-center flex items-center justify-center h-full text-white">
+                                                    Upload a document or Start a conversation...
                                                 </div>
-                                            ))
-                                        )}
-                                    </div>
+                                            ) : (
+                                                messages.map((message, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                                                    >
+                                                        <div
+                                                            className={`p-3 rounded-sm ${message.type === 'user'
+                                                                ? 'bg-primary text-white text-right'
+                                                                : 'bg-primary text-white text-left'
+                                                                }`}
+                                                            style={{
+                                                                wordWrap: 'break-word',
+                                                                display: 'inline-block',
+                                                                maxWidth: '70%'
+                                                            }}
+                                                        >
+                                                            {message.type === 'agent' ? (
+                                                                <ReactMarkdown>
+                                                                    {message.text}
+                                                                </ReactMarkdown>
+                                                            ) : (
+                                                                message.text
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </ScrollArea>
                                     <div className="mt-4 relative">
                                         <input
                                             type="text"
