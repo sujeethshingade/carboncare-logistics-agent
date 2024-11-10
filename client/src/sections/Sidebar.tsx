@@ -5,7 +5,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -82,7 +81,6 @@ export const Sidebar = ({
 
     const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm('Are you sure you want to delete this chat session?')) return;
 
         setIsLoading(true);
         try {
@@ -141,10 +139,17 @@ export const Sidebar = ({
         const date = new Date(dateString);
         const now = new Date();
         const diff = now.getTime() - date.getTime();
+
+        const minutes = Math.floor(diff / (1000 * 60));
+        const hours = Math.floor(diff / (1000 * 60 * 60));
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
         if (days === 0) {
-            return 'Today';
+            if (hours === 0) {
+                return minutes <= 1 ? 'Just now' : `${minutes} minutes ago`;
+            } else {
+                return hours === 1 ? 'An hour ago' : `${hours} hours ago`;
+            }
         } else if (days === 1) {
             return 'Yesterday';
         } else if (days < 7) {
@@ -153,10 +158,14 @@ export const Sidebar = ({
             return date.toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
-                year: 'numeric'
+                year: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
             });
         }
     };
+
 
     const filteredSessions = sessions.filter(session =>
         session.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -165,43 +174,42 @@ export const Sidebar = ({
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-                <Button 
-                    size="icon" 
+                <Button
+                    size="icon"
                     className="bg-black text-white hover:bg-black hover:text-primary rounded-none fixed left-3 top-3 z-50 transition-colors duration-300"
                     aria-label="Open chat history"
                 >
                     <PanelRight className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
-            <SheetContent 
-                side="left" 
-                className="w-[350px] p-0 bg-black border-r border-gray-800"
+            <SheetContent
+                side="left"
+                className="w-[350px] p-0 bg-black border-r"
             >
-                <SheetHeader className="p-4 border-b border-gray-800">
-                    <SheetTitle className="text-lg font-semibold text-white">Chat History</SheetTitle>
+                <SheetHeader className="p-4 border-b">
+                    <SheetTitle className="mb-2 text-lg font-semibold text-white">Chat History</SheetTitle>
                     <input
                         type="text"
                         placeholder="Search conversations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-md text-white text-sm focus:outline-none focus:border-primary"
+                        className="w-full px-3 py-2 bg-black border text-white text-sm focus:outline-none focus:border-primary"
                     />
                 </SheetHeader>
                 <ScrollArea className="h-[calc(100vh-120px)] p-4">
                     <div className="space-y-2">
                         {isLoading ? (
-                            <div className="text-center text-gray-400">Loading...</div>
+                            <div className="text-center">Loading...</div>
                         ) : filteredSessions.length === 0 ? (
-                            <div className="text-center text-gray-400">No conversations found</div>
+                            <div className="text-center">No conversations found.</div>
                         ) : (
                             filteredSessions.map((session) => (
                                 <div
                                     key={session.id}
                                     onClick={() => onSessionSelect(session.id)}
                                     className={cn(
-                                        "p-3 rounded-lg border border-gray-800 cursor-pointer transition-all duration-200",
-                                        "hover:bg-gray-900 hover:border-gray-700",
-                                        currentSessionId === session.id && "bg-gray-900 border-primary"
+                                        "p-3 border hover:border-primary cursor-pointer transition-all duration-300",
+                                        currentSessionId === session.id && "border-primary"
                                     )}
                                 >
                                     <div className="flex justify-between items-start gap-2">
@@ -209,47 +217,43 @@ export const Sidebar = ({
                                             <h3 className="font-medium text-white truncate">
                                                 {session.title}
                                             </h3>
-                                            <div className="flex items-center gap-2 mt-1 text-sm text-gray-400">
+                                            <div className="flex items-center gap-2 mt-1 text-sm text-white">
                                                 <Clock className="h-3 w-3" />
                                                 <span>{formatDate(session.created_at)}</span>
                                             </div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <Badge variant="secondary" className="bg-gray-800">
-                                                    <MessageCircle className="h-3 w-3 mr-1" />
-                                                    {session.message_count} messages
-                                                </Badge>
+                                            <div className="flex items-center gap-2 mt-1 text-sm text-white">
+                                                <MessageCircle className="h-3 w-3" />
+                                                {session.message_count} messages
                                             </div>
                                         </div>
                                         <Button
-                                            variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 text-gray-400 hover:text-red-400"
+                                            className="h-8 w-8 rounded-none bg-black text-white hover:text-red-500 hover:bg-black transition-colors duration-300"
                                             onClick={(e) => handleDeleteSession(session.id, e)}
                                             disabled={isLoading}
                                         >
-                                            <Trash2 className="h-4 w-4" />
+                                            <Trash2 className="h-5 w-5" />
                                         </Button>
                                     </div>
                                     {session.files && session.files.length > 0 && (
                                         <>
-                                            <Separator className="my-2 bg-gray-800" />
+                                            <Separator className="my-2 bg-white" />
                                             <div className="space-y-1">
                                                 {session.files.map((file) => (
                                                     <div
                                                         key={file.id}
-                                                        className="flex items-center justify-between text-sm text-gray-400 p-1 rounded hover:bg-gray-800"
+                                                        className="flex items-center justify-between text-sm text-white p-1"
                                                     >
                                                         <div className="flex items-center gap-2 truncate">
                                                             <FileText className="h-3 w-3 flex-shrink-0" />
                                                             <span className="truncate">{file.file_name}</span>
                                                         </div>
                                                         <Button
-                                                            variant="ghost"
                                                             size="icon"
-                                                            className="h-6 w-6 text-gray-400 hover:text-primary"
+                                                            className="h-5 w-5 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300"
                                                             onClick={(e) => handleDownloadFile(file.file_path, file.file_name, e)}
                                                         >
-                                                            <Download className="h-3 w-3" />
+                                                            <Download className="h-5 w-5" />
                                                         </Button>
                                                     </div>
                                                 ))}
