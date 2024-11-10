@@ -133,6 +133,29 @@ class LogisticsSustainabilityPipeline:
             'optimization_opportunities': self._identify_optimization_opportunities(data),
             'trend_analysis': self._analyze_trends(data)
         }
+    
+    # def calculate_sustainability_score(order_data):
+    #   weights = {
+    #       'packaging_score': 0.2,
+    #       'shipping_method_score': 0.15,
+    #       'distance_score': 0.15,
+    #       'waste_score': 0.1,
+    #       'carbon_emission_score': 0.2,
+    #       'resource_efficiency_score': 0.1,
+    #       'energy_usage_score': 0.1
+    #   }
+      
+    #   scores = {
+    #       'packaging_score': evaluate_packaging(order_data.packaging),
+    #       'shipping_method_score': evaluate_shipping(order_data.shipping),
+    #       'distance_score': evaluate_route(order_data.route),
+    #       'waste_score': evaluate_waste(order_data.waste_metrics),
+    #       'carbon_emission_score': evaluate_emissions(order_data.emissions),
+    #       'resource_efficiency_score': evaluate_resources(order_data.resources),
+    #       'energy_usage_score': evaluate_energy(order_data.energy)
+    #   }
+      
+    #   return sum(score * weights[metric] for metric, score in scores.items())
 
     def _calculate_sustainability_metrics(self, data: Dict) -> Dict:
         """Calculate various sustainability metrics"""
@@ -156,19 +179,129 @@ class LogisticsSustainabilityPipeline:
         return distance * transport_emissions.get(data['transport_mode'], 0.1)
 
     def _calculate_resource_efficiency(self, data: Dict) -> float:
-        """Calculate resource efficiency score"""
-        # TODO: Implementation 
-        return 0.0
+        """Calculate resource efficiency score based on packaging and transport utilization"""
+        try:
+            packages = data.get('packages', [])
+            if not packages:
+                return 0.0
+
+            # Calculate volume utilization
+            total_volume = sum(
+                dim.get('length', 0) * dim.get('width', 0) * dim.get('height', 0)
+                for package in packages
+                for dim in [package.get('dimensions', {})]
+            )
+
+            # Calculate weight utilization
+            total_weight = sum(package.get('weight', 0) for package in packages)
+
+            # Standard container metrics (example values)
+            standard_container = {
+                'volume': 67.6,  # m³ (standard 40ft container)
+                'max_weight': 26755  # kg (standard 40ft container max payload)
+            }
+
+            # Calculate utilization ratios
+            volume_utilization = min(total_volume / standard_container['volume'], 1.0)
+            weight_utilization = min(total_weight / standard_container['max_weight'], 1.0)
+
+            # Material efficiency (percentage of recyclable packages)
+            material_efficiency = sum(1 for p in packages if p.get('recyclable', False)) / len(packages)
+
+            # Weighted score (can be adjusted based on importance)
+            resource_efficiency = (
+                volume_utilization * 0.4 +
+                weight_utilization * 0.3 +
+                material_efficiency * 0.3
+            ) * 100  # Convert to percentage
+
+            return round(resource_efficiency, 2)
+
+        except Exception as e:
+            logger.error(f"Error calculating resource efficiency: {str(e)}")
+            return 0.0
 
     def _calculate_waste_reduction(self, data: Dict) -> float:
-        """Calculate waste reduction metrics"""
-        # TODO: Implementation 
-        return 0.0
+        """Calculate waste reduction metrics based on packaging and materials"""
+        try:
+            packages = data.get('packages', [])
+            if not packages:
+                return 0.0
+
+            # Define material recycling rates
+            material_recycling_rates = {
+                'cardboard': 0.85,
+                'paper': 0.80,
+                'plastic': 0.30,
+                'metal': 0.90,
+                'glass': 0.75,
+                'wood': 0.60
+            }
+
+            # Calculate waste reduction score
+            total_score = 0
+            for package in packages:
+                material_type = package.get('material_type', '').lower()
+                weight = package.get('weight', 0)
+                
+                # Base score from material recyclability
+                material_score = material_recycling_rates.get(material_type, 0.1)
+                
+                # Adjust for package properties
+                if package.get('recyclable', False):
+                    material_score *= 1.2  # 20% bonus for recyclable packaging
+                
+                # Volume efficiency (penalize oversized packaging)
+                dimensions = package.get('dimensions', {})
+                volume = dimensions.get('length', 0) * dimensions.get('width', 0) * dimensions.get('height', 0)
+                density = weight / volume if volume > 0 else 0
+                if density < 0.1:  # Example threshold for inefficient packaging
+                    material_score *= 0.8  # 20% penalty for inefficient volume usage
+                
+                total_score += material_score * weight
+
+            # Normalize score to 0-100 range
+            normalized_score = (total_score / (sum(p.get('weight', 0) for p in packages))) * 100
+            return round(normalized_score, 2)
+
+        except Exception as e:
+            logger.error(f"Error calculating waste reduction: {str(e)}")
+            return 0.0
 
     def _calculate_energy_efficiency(self, data: Dict) -> float:
-        """Calculate energy efficiency metrics"""
-        # TODO: Implementation 
-        return 0.0
+        """Calculate energy efficiency metrics based on transport mode and distance"""
+        try:
+            # Energy efficiency factors (MJ/tonne-km) for different transport modes
+            energy_factors = {
+                'truck': 2.5,
+                'train': 0.6,
+                'ship': 0.2,
+                'air': 8.0
+            }
+
+            transport_mode = data.get('transport_mode', 'truck').lower()
+            distance = self._calculate_distance(data['origin'], data['destination'])
+            total_weight = sum(p.get('weight', 0) for p in data.get('packages', []))
+            
+            # Convert weight to tonnes
+            weight_tonnes = total_weight / 1000
+            
+            # Calculate base energy consumption
+            base_energy = distance * weight_tonnes * energy_factors.get(transport_mode, 2.5)
+            
+            # Calculate efficiency score (inverse relationship - lower energy use is better)
+            max_energy = distance * weight_tonnes * max(energy_factors.values())
+            min_energy = distance * weight_tonnes * min(energy_factors.values())
+            
+            if max_energy == min_energy:
+                return 100.0
+            
+            efficiency_score = (1 - (base_energy - min_energy) / (max_energy - min_energy)) * 100
+            return round(efficiency_score, 2)
+
+        except Exception as e:
+            logger.error(f"Error calculating energy efficiency: {str(e)}")
+            return 0.0
 
     def _calculate_distance(self, origin: Dict[str, float], destination: Dict[str, float]) -> float:
         """Calculate distance between two points using Haversine formula"""
@@ -248,27 +381,142 @@ class LogisticsSustainabilityPipeline:
         return bool(non_recyclable_packages or oversized_packages)
     
     def _identify_seasonal_patterns(self, data: Dict) -> Dict:
-        """
-        TODO
-        """
-        return {
-            'season': 'Not implemented',
-            'patterns': []
-        }
+        """Identify seasonal patterns in shipping data"""
+        try:
+            timestamp = data.get('timestamp')
+            if not timestamp:
+                return {'season': 'unknown', 'patterns': []}
+
+            # Determine season
+            month = timestamp.month
+            seasons = {
+                (12, 1, 2): 'winter',
+                (3, 4, 5): 'spring',
+                (6, 7, 8): 'summer',
+                (9, 10, 11): 'fall'
+            }
+            current_season = next(
+                season for months, season in seasons.items() if month in months
+            )
+
+            # Example seasonal patterns (would be based on historical data in production)
+            seasonal_impacts = {
+                'winter': [
+                    {'factor': 'weather_delays', 'impact': 'high'},
+                    {'factor': 'energy_consumption', 'impact': 'high'},
+                    {'factor': 'route_restrictions', 'impact': 'medium'}
+                ],
+                'summer': [
+                    {'factor': 'cooling_requirements', 'impact': 'high'},
+                    {'factor': 'traffic_congestion', 'impact': 'medium'},
+                    {'factor': 'delivery_windows', 'impact': 'low'}
+                ],
+                'spring': [
+                    {'factor': 'route_flexibility', 'impact': 'high'},
+                    {'factor': 'energy_consumption', 'impact': 'medium'},
+                    {'factor': 'delivery_efficiency', 'impact': 'high'}
+                ],
+                'fall': [
+                    {'factor': 'weather_variability', 'impact': 'medium'},
+                    {'factor': 'route_optimization', 'impact': 'high'},
+                    {'factor': 'delivery_volume', 'impact': 'medium'}
+                ]
+            }
+
+            return {
+                'season': current_season,
+                'patterns': seasonal_impacts.get(current_season, [])
+            }
+
+        except Exception as e:
+            logger.error(f"Error identifying seasonal patterns: {str(e)}")
+            return {'season': 'unknown', 'patterns': []}
 
     def _detect_anomalies(self, data: Dict) -> List:
-        """
-        TODO
-        """
-        return []
+        """Detect anomalies in shipping patterns and sustainability metrics"""
+        try:
+            anomalies = []
+            
+            # Check distance anomalies
+            distance = self._calculate_distance(data['origin'], data['destination'])
+            if distance > 1000:  # Example threshold
+                anomalies.append({
+                    'type': 'distance',
+                    'severity': 'high',
+                    'description': 'Unusually long shipping distance detected',
+                    'recommendation': 'Consider regional fulfillment centers'
+                })
+
+            # Check packaging anomalies
+            packages = data.get('packages', [])
+            for package in packages:
+                weight = package.get('weight', 0)
+                dimensions = package.get('dimensions', {})
+                volume = dimensions.get('length', 0) * dimensions.get('width', 0) * dimensions.get('height', 0)
+                
+                # Density check
+                if volume > 0 and (weight / volume) < 0.01:
+                    anomalies.append({
+                        'type': 'packaging',
+                        'severity': 'medium',
+                        'description': f'Inefficient packaging detected for package {package.get("package_id")}',
+                        'recommendation': 'Review packaging size optimization'
+                    })
+
+            # Transport mode anomalies
+            transport_mode = data.get('transport_mode')
+            if transport_mode == 'air' and distance < 300:
+                anomalies.append({
+                    'type': 'transport',
+                    'severity': 'high',
+                    'description': 'Air transport used for short distance',
+                    'recommendation': 'Consider ground transportation alternatives'
+                })
+
+            return anomalies
+
+        except Exception as e:
+            logger.error(f"Error detecting anomalies: {str(e)}")
+            return []
 
     def _compare_historical_data(self, data: Dict) -> Dict:
-        """
-        TODO
-        """
-        return {
-            'comparison_status': 'Not implemented'
-        }
+        """Compare current shipment with historical data for trend analysis"""
+        try:
+            # In production, this would query a database for historical data
+            # For demonstration, we'll create example comparisons
+            current_metrics = self._calculate_sustainability_metrics(data)
+            
+            return {
+                'comparison_status': 'completed',
+                'metrics_comparison': {
+                    'carbon_footprint': {
+                        'current': current_metrics['carbon_footprint'],
+                        'historical_avg': 150.0,  # Example value
+                        'trend': 'improving' if current_metrics['carbon_footprint'] < 150.0 else 'declining'
+                    },
+                    'resource_efficiency': {
+                        'current': current_metrics['resource_efficiency'],
+                        'historical_avg': 75.0,  # Example value
+                        'trend': 'improving' if current_metrics['resource_efficiency'] > 75.0 else 'declining'
+                    },
+                    'trends': [
+                        {
+                            'metric': 'carbon_efficiency',
+                            'period': 'last_30_days',
+                            'change_percentage': -5.2  # Example value
+                        },
+                        {
+                            'metric': 'packaging_efficiency',
+                            'period': 'last_30_days',
+                            'change_percentage': 3.8  # Example value
+                        }
+                    ]
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Error comparing historical data: {str(e)}")
+            return {'comparison_status': 'failed', 'error': str(e)}
 
 
 # Example Usage
@@ -316,16 +564,16 @@ async def run_pipeline():
 
 import asyncio
 
+import asyncio
+import json
+
 if __name__ == "__main__":
     async def main():
-        # Run the pipeline
         result = await run_pipeline()
         
-        # Print the results
         print("Pipeline Processing Result:")
         print("------------------------")
-        for key, value in result.items():
-            print(f"{key}: {value}")
-
-    # Run the async main function
+        # Use json.dumps() to pretty print with indentation
+        print(json.dumps(result, indent=2, default=str))
+    
     asyncio.run(main())
