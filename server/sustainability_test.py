@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 import json
 from typing import List, Dict
@@ -60,7 +59,7 @@ def generate_sample_data(num_samples: int = 10) -> List[Dict]:
     
     return samples
 
-async def test_sustainability_scoring():
+def test_sustainability_scoring():
     """Test the sustainability scoring system"""
     
     pipeline = LogisticsSustainabilityPipeline()
@@ -68,10 +67,10 @@ async def test_sustainability_scoring():
     print("\nGenerating sample shipment data...")
     sample_shipments = generate_sample_data(10)
     
-    # historical data for ML training
+    # historical data for ML training. TODO: replace with real data
     print("\nGenerating historical data for ML training...")
     historical_data = generate_sample_data(100)
-    
+
     # mock historical sustainability scores
     historical_scores = np.random.uniform(50, 95, size=100)
     
@@ -90,7 +89,7 @@ async def test_sustainability_scoring():
         print("----------------------------------------")
         
         # Analyze sustainability using the trained predictor
-        analysis = await analyze_sustainability(pipeline, shipment, predictor)
+        analysis = analyze_sustainability(pipeline, shipment, predictor)
         
         print("\nMetrics:")
         for metric, value in analysis['metrics'].items():
@@ -159,6 +158,6 @@ def analyze_results():
 
 if __name__ == "__main__":
     print("Starting Sustainability Scoring System Test...")
-    asyncio.run(test_sustainability_scoring())
-    print("\nAnalyzing results...")
-    analyze_results()
+    test_sustainability_scoring()
+    # print("\nAnalyzing results...")
+    # analyze_results()

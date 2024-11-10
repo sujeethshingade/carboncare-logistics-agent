@@ -275,7 +275,7 @@ class SustainabilityPredictor:
         return R * c
 
 # Example usage:
-async def analyze_sustainability(pipeline: LogisticsSustainabilityPipeline,
+def analyze_sustainability(pipeline: LogisticsSustainabilityPipeline,
                               shipment_data: Dict,
                               predictor: SustainabilityPredictor = None) -> Dict:
     scorer = SustainabilityScoring()
@@ -283,7 +283,7 @@ async def analyze_sustainability(pipeline: LogisticsSustainabilityPipeline,
     if predictor is None:
         predictor = SustainabilityPredictor()
     
-    processed_data = await pipeline.process_data(shipment_data)
+    processed_data = pipeline.process_data(shipment_data)
     
     metrics = SustainabilityMetrics(
         psi=scorer.calculate_psi(shipment_data['packages']),

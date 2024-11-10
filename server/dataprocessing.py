@@ -56,19 +56,19 @@ class LogisticsSustainabilityPipeline:
     def add_enrichment_source(self, source_name: str, source_callable: callable):
         self.enrichment_sources[source_name] = source_callable
 
-    async def process_data(self, raw_data: Union[dict, pd.DataFrame]) -> Dict:
+    def process_data(self, raw_data: Union[dict, pd.DataFrame]) -> Dict:
         try:
             # 1. Initial Validation
-            validated_data = await self._validate_data(raw_data)
+            validated_data =  self._validate_data(raw_data)
             
             # 2. Data Enrichment
-            enriched_data = await self._enrich_data(validated_data)
+            enriched_data =  self._enrich_data(validated_data)
             
             # 3. Process through pipeline
-            processed_data = await self._run_processors(enriched_data)
+            processed_data =  self._run_processors(enriched_data)
             
             # 4. Generate Analytics
-            analytics_results = await self._generate_analytics(processed_data)
+            analytics_results =  self._generate_analytics(processed_data)
             
             return {
                 'status': 'success',
@@ -80,7 +80,7 @@ class LogisticsSustainabilityPipeline:
             logger.error(f"Error in processing pipeline: {str(e)}")
             return {'status': 'error', 'message': str(e)}
 
-    async def _validate_data(self, data: Union[dict, pd.DataFrame]) -> Union[dict, pd.DataFrame]:
+    def _validate_data(self, data: Union[dict, pd.DataFrame]) -> Union[dict, pd.DataFrame]:
         """Validate incoming data structure and content"""
         try:
             if isinstance(data, dict):
@@ -96,7 +96,7 @@ class LogisticsSustainabilityPipeline:
                 return self.error_handlers[type(e).__name__](e, data)
             raise
 
-    async def _enrich_data(self, data: Union[dict, pd.DataFrame]) -> Dict:
+    def _enrich_data(self, data: Union[dict, pd.DataFrame]) -> Dict:
         """Enrich data with additional information from various sources"""
         enriched_data = data.copy() if isinstance(data, dict) else data.to_dict('records')[0]
         
@@ -116,7 +116,7 @@ class LogisticsSustainabilityPipeline:
                     
         return enriched_data
 
-    async def _run_processors(self, data: Dict) -> Dict:
+    def _run_processors(self, data: Dict) -> Dict:
         """Run data through all processors in sequence"""
         processed_data = data
         for processor in self.processors:
@@ -126,36 +126,13 @@ class LogisticsSustainabilityPipeline:
                 logger.warning(f"Data validation failed for processor: {processor.__class__.__name__}")
         return processed_data
 
-    async def _generate_analytics(self, data: Dict) -> Dict:
+    def _generate_analytics(self, data: Dict) -> Dict:
         """Generate analytics from processed data"""
         return {
             'sustainability_metrics': self._calculate_sustainability_metrics(data),
             'optimization_opportunities': self._identify_optimization_opportunities(data),
             'trend_analysis': self._analyze_trends(data)
         }
-    
-    # def calculate_sustainability_score(order_data):
-    #   weights = {
-    #       'packaging_score': 0.2,
-    #       'shipping_method_score': 0.15,
-    #       'distance_score': 0.15,
-    #       'waste_score': 0.1,
-    #       'carbon_emission_score': 0.2,
-    #       'resource_efficiency_score': 0.1,
-    #       'energy_usage_score': 0.1
-    #   }
-      
-    #   scores = {
-    #       'packaging_score': evaluate_packaging(order_data.packaging),
-    #       'shipping_method_score': evaluate_shipping(order_data.shipping),
-    #       'distance_score': evaluate_route(order_data.route),
-    #       'waste_score': evaluate_waste(order_data.waste_metrics),
-    #       'carbon_emission_score': evaluate_emissions(order_data.emissions),
-    #       'resource_efficiency_score': evaluate_resources(order_data.resources),
-    #       'energy_usage_score': evaluate_energy(order_data.energy)
-    #   }
-      
-    #   return sum(score * weights[metric] for metric, score in scores.items())
 
     def _calculate_sustainability_metrics(self, data: Dict) -> Dict:
         """Calculate various sustainability metrics"""
@@ -387,7 +364,6 @@ class LogisticsSustainabilityPipeline:
             if not timestamp:
                 return {'season': 'unknown', 'patterns': []}
 
-            # Determine season
             month = timestamp.month
             seasons = {
                 (12, 1, 2): 'winter',
@@ -399,7 +375,7 @@ class LogisticsSustainabilityPipeline:
                 season for months, season in seasons.items() if month in months
             )
 
-            # Example seasonal patterns (would be based on historical data in production)
+            # Example seasonal patterns (would be based on historical data in production) TODO: 
             seasonal_impacts = {
                 'winter': [
                     {'factor': 'weather_delays', 'impact': 'high'},
@@ -520,7 +496,7 @@ class LogisticsSustainabilityPipeline:
 
 
 # Example Usage
-async def run_pipeline():
+def run_pipeline():
     # Create pipeline instance
     pipeline = LogisticsSustainabilityPipeline()
     
@@ -559,21 +535,18 @@ async def run_pipeline():
     }
     
     # Process data
-    result = await pipeline.process_data(sample_data)
+    result = pipeline.process_data(sample_data)
     return result
 
-import asyncio
-
-import asyncio
 import json
 
 if __name__ == "__main__":
-    async def main():
-        result = await run_pipeline()
+    def main():
+        result = run_pipeline()
         
         print("Pipeline Processing Result:")
         print("------------------------")
         # Use json.dumps() to pretty print with indentation
         print(json.dumps(result, indent=2, default=str))
     
-    asyncio.run(main())
+    main()
