@@ -83,7 +83,7 @@ export const Hero = () => {
                 .from('chat_sessions')
                 .insert({
                     title: 'New Chat',
-                    user_id: user.id 
+                    user_id: user.id
                 })
                 .select()
                 .single();
@@ -249,17 +249,32 @@ export const Hero = () => {
         }
     }, [messages]);
 
-    function handleClearChat(event: React.MouseEvent<HTMLButtonElement>): void {
-        throw new Error('Function not implemented.');
-    }
+    const handleClearChat = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        try {
+            setIsLoading(true);
+            setMessages([]);
+
+            if (currentSessionId) {
+                const { error: deleteError } = await supabase
+                    .from('messages')
+                    .delete()
+                    .eq('session_id', currentSessionId);
+
+                if (deleteError) throw deleteError;
+                await createNewSession();
+            }
+
+            setError(null);
+        } catch (err) {
+            console.error('Error clearing chat:', err);
+            setError('Failed to clear chat. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="container py-16">
-            {error && (
-                <div className="bg-red-500 text-white p-3 mb-4 rounded">
-                    {error}
-                </div>
-            )}
             {user ? (
                 <>
                     <Sidebar
@@ -283,7 +298,6 @@ export const Hero = () => {
                                 </button>
                             ))}
                         </div>
-
                         <Card className="bg-black border rounded-none">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                                 <CardTitle className="text-white text-lg font-semibold">CarbonCare Agent</CardTitle>
@@ -364,11 +378,6 @@ export const Hero = () => {
                             className="hidden"
                             onChange={handleFileUpload}
                         />
-                        {isLoading && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                <div className="text-white">Processing...</div>
-                            </div>
-                        )}
                     </div>
                 </>
             ) : (
