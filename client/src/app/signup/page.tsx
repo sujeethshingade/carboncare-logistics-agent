@@ -13,6 +13,7 @@ const SignupPage = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,7 +31,7 @@ const SignupPage = () => {
 
             if (error) throw error;
 
-            router.push('/login');
+            setShowConfirmation(true);
         } catch (error: any) {
             setError(error.message);
         } finally {
@@ -55,56 +56,62 @@ const SignupPage = () => {
                     </Link>
                 </h1>
             </div>
-            <form className="border px-8 pt-6 pb-8 mb-4 w-96" onSubmit={handleSignup}>
-                {error && (
-                    <div className="mb-4 text-red-500 text-sm text-center">
-                        {error}
-                    </div>
-                )}
-                <div className="mb-4">
-                    <label className="block text-white text-sm font-bold mb-2" htmlFor="email">
-                        Email
-                    </label>
-                    <input
-                        className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
-                        id="email"
-                        type="email"
-                        placeholder="enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block text-white text-sm font-bold mb-2" htmlFor="password">
-                        Password
-                    </label>
-                    <input
-                        className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
-                        id="password"
-                        type="password"
-                        placeholder="enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-                <div className="flex items-center justify-center py-2">
-                    <button
-                        className="bg-black hover:text-primary text-white border font-bold py-2 px-4 focus:outline-none focus:shadow-outline disabled:opacity-50"
-                        type="submit"
-                        disabled={loading}
-                    >
-                        {loading ? 'Loading...' : 'Signup'}
-                    </button>
-                </div>
-                <p className="text-gray-400 text-sm pt-2 text-center">
-                    Already have an account?{' '}
+            {showConfirmation ? (
+                <div className="text-center mt-4 p-4 border">
+                    <p className="text-white mb-4">
+                        Please check your email to confirm your registration.
+                    </p>
                     <Link href="/login" className="text-primary hover:underline">
-                        Login
+                        Back to Login
                     </Link>
-                </p>
-            </form>
+                </div>
+            ) : (
+                <form className="border px-8 pt-6 pb-8 mb-4 w-96" onSubmit={handleSignup}>
+                    <div className="mb-4">
+                        <label className="block text-white text-sm font-bold mb-2" htmlFor="email">
+                            Email
+                        </label>
+                        <input
+                            className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
+                            id="email"
+                            type="email"
+                            placeholder="enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block text-white text-sm font-bold mb-2" htmlFor="password">
+                            Password
+                        </label>
+                        <input
+                            className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
+                            id="password"
+                            type="password"
+                            placeholder="enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="flex items-center justify-center py-2">
+                        <button
+                            className="bg-black hover:text-primary text-white border font-bold py-2 px-4 focus:outline-none focus:shadow-outline disabled:opacity-50"
+                            type="submit"
+                            disabled={loading}
+                        >
+                            {loading ? 'Loading...' : 'Signup'}
+                        </button>
+                    </div>
+                    <p className="text-gray-400 text-sm pt-2 text-center">
+                        Already have an account?{' '}
+                        <Link href="/login" className="text-primary hover:underline">
+                            Login
+                        </Link>
+                    </p>
+                </form>
+            )}
         </div>
     );
 };
