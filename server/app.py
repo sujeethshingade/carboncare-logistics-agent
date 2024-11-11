@@ -56,6 +56,10 @@ def analyze_shipment():
     """Analyze shipment sustainability with LLM-enhanced insights"""
     try:
         data = request.get_json()
+
+        # Add timestamp if not present
+        if 'timestamp' not in data:
+            data['timestamp'] = datetime.now().isoformat()
         
         # Validate required fields
         required_fields = ['shipment_id', 'origin', 'destination', 'transport_mode', 'packages']

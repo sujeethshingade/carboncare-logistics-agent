@@ -1,3 +1,4 @@
+from dataclasses import Field
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Union
@@ -29,7 +30,7 @@ class ShipmentData(BaseModel):
     destination: Dict[str, float]
     transport_mode: str
     packages: List[PackageData]
-    timestamp: datetime
+    timestamp: Optional[datetime]
 
 class DataProcessor(ABC):
     @abstractmethod
