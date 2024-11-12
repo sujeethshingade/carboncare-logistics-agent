@@ -1,3 +1,5 @@
+-- sidebar
+
 create extension if not exists "uuid-ossp";
 
 -- create tables
@@ -127,3 +129,32 @@ create policy "Users can delete their own files"
   using (
     auth.uid() = (storage.foldername(name))[1]::uuid
   );
+
+
+--dashboard
+
+-- create table
+create table public.sustainability_analytics (
+  id uuid default uuid_generate_v4() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  timestamp timestamp with time zone not null,
+  num_shipments integer not null,
+  data jsonb not null,
+  user_id uuid not null references auth.users(id)
+);
+
+-- enable RLS
+alter table public.sustainability_analytics enable row level security;
+
+-- policies for sustainability_analytics
+create policy "Allow authenticated users to read their own analytics"
+  on public.sustainability_analytics
+  for select
+  to authenticated
+  using (user_id = auth.uid());
+
+create policy "Allow authenticated users to insert their own analytics"
+  on public.sustainability_analytics
+  for insert
+  to authenticated
+  with check (user_id = auth.uid());

@@ -5,6 +5,7 @@ import { Paperclip, ArrowUp, RefreshCcw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/supabase';
 import { Sidebar } from '@/sections/Sidebar';
+import { Dashboard } from '@/sections/Dashboard'
 import { useRouter } from 'next/navigation';
 
 type ChatTopic = {
@@ -203,7 +204,7 @@ export const Hero = () => {
 
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || isLoading) return;
-        
+
         if (!currentSessionId) {
             try {
                 await createNewSession();
@@ -216,20 +217,20 @@ export const Hero = () => {
                 return;
             }
         }
-    
+
         setIsLoading(true);
-    
+
         try {
             const newMessages = [
                 { text: inputMessage, type: 'user' as const },
                 { text: 'Error generating response.', type: 'agent' as const }
             ];
-    
+
             setMessages(prev => [...prev, ...newMessages]);
             setInputMessage('');
-    
+
             await saveMessagesToDatabase(newMessages);
-    
+
             if (messages.length === 0) {
                 await updateSessionTitle(inputMessage.slice(0, 50));
             }
@@ -304,6 +305,7 @@ export const Hero = () => {
                             setMessages([]);
                         }}
                     />
+                    <Dashboard />
                     <div className="max-w-6xl mx-auto space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
                             {sustainabilityTopics.map((topic, index) => (
