@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, RadarChart, Radar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Cell } from 'recharts';
 import { LayoutDashboard, RefreshCw, AlertCircle } from 'lucide-react';
 import { getLatestAnalytics } from '@/lib/analytics-service';
@@ -155,14 +154,7 @@ export const Dashboard: React.FC = () => {
                 </SheetHeader>
 
                 <ScrollArea className="h-[calc(100vh-80px)] p-4">
-                    {error && (
-                        <Alert variant="destructive" className="mb-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    {loading && <div className="text-center text-white">Loading analytics data...</div>}
+                    {loading && <div className="text-center text-white">Loading...</div>}
 
                     {!loading && !error && chartData && (
                         <div className="space-y-8">
