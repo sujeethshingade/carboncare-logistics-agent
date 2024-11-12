@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, RadarChart, Radar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Cell } from 'recharts';
-import { LayoutDashboard, RefreshCw} from 'lucide-react';
+import { LayoutDashboard, RefreshCw } from 'lucide-react';
 import { getLatestAnalytics } from '@/lib/analytics-service';
 
 interface Metrics {
@@ -161,7 +161,7 @@ export const Dashboard: React.FC = () => {
                             {/* Area Chart */}
                             <div className="p-4 border">
                                 <h3 className="text-white mb-4">Sustainability Metrics Trends</h3>
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={400}>
                                     <AreaChart data={chartData.metricsData}>
                                         <defs>
                                             <linearGradient id="colorPsi" x1="0" y1="0" x2="0" y2="1">
@@ -216,7 +216,7 @@ export const Dashboard: React.FC = () => {
                             {/* Bar Chart */}
                             <div className="p-4 border">
                                 <h3 className="text-white mb-4">Actual vs Predicted Scores</h3>
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={400}>
                                     <BarChart data={chartData.sustainabilityScores}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
                                         <XAxis dataKey="name" stroke="#fff" />
@@ -238,7 +238,7 @@ export const Dashboard: React.FC = () => {
                             {/* Pie Chart */}
                             <div className="p-4 border">
                                 <h3 className="text-white mb-4">Average Metrics Distribution</h3>
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={400}>
                                     <PieChart>
                                         <Pie
                                             data={chartData.pieData}
@@ -246,7 +246,7 @@ export const Dashboard: React.FC = () => {
                                             nameKey="name"
                                             cx="50%"
                                             cy="50%"
-                                            outerRadius={100}
+                                            outerRadius={80}
                                             fill="#8884d8"
                                             label
                                         >
@@ -254,13 +254,6 @@ export const Dashboard: React.FC = () => {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: '#000',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '6px'
-                                            }}
-                                        />
                                         <Legend />
                                     </PieChart>
                                 </ResponsiveContainer>
@@ -269,8 +262,8 @@ export const Dashboard: React.FC = () => {
                             {/* Radar Chart */}
                             <div className="p-4 border">
                                 <h3 className="text-white mb-4">Feature Importance Analysis</h3>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData.radarData}>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <RadarChart cx="50%" cy="50%" outerRadius="60%" data={chartData.radarData}>
                                         <PolarGrid stroke="#ffffff20" />
                                         <PolarAngleAxis dataKey="subject" stroke="#fff" />
                                         <PolarRadiusAxis stroke="#fff" />
@@ -288,6 +281,7 @@ export const Dashboard: React.FC = () => {
                                                 borderRadius: '6px'
                                             }}
                                         />
+                                        <Legend />
                                     </RadarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -295,7 +289,7 @@ export const Dashboard: React.FC = () => {
                             {/* Line Chart */}
                             <div className="p-4 border">
                                 <h3 className="text-white mb-4">Resource Utilization Trends</h3>
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={400}>
                                     <LineChart data={chartData.metricsData}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
                                         <XAxis dataKey="name" stroke="#fff" />
