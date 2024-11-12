@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, RadarChart, Radar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Cell } from 'recharts';
-import { LayoutDashboard, RefreshCw, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, RefreshCw} from 'lucide-react';
 import { getLatestAnalytics } from '@/lib/analytics-service';
 
 interface Metrics {
@@ -158,8 +158,8 @@ export const Dashboard: React.FC = () => {
 
                     {!loading && !error && chartData && (
                         <div className="space-y-8">
-                            {/* Area Chart - Overall Metrics Trends */}
-                            <div className="p-4 border border-white/10 rounded-lg">
+                            {/* Area Chart */}
+                            <div className="p-4 border">
                                 <h3 className="text-white mb-4">Sustainability Metrics Trends</h3>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <AreaChart data={chartData.metricsData}>
@@ -213,9 +213,9 @@ export const Dashboard: React.FC = () => {
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Bar Chart - Actual vs Predicted Scores */}
-                            <div className="p-4 border border-white/10 rounded-lg">
-                                <h3 className="text-white mb-4">Actual vs Predicted Sustainability Scores</h3>
+                            {/* Bar Chart */}
+                            <div className="p-4 border">
+                                <h3 className="text-white mb-4">Actual vs Predicted Scores</h3>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <BarChart data={chartData.sustainabilityScores}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
@@ -235,8 +235,8 @@ export const Dashboard: React.FC = () => {
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Pie Chart - Average Metrics Distribution */}
-                            <div className="p-4 border border-white/10 rounded-lg">
+                            {/* Pie Chart */}
+                            <div className="p-4 border">
                                 <h3 className="text-white mb-4">Average Metrics Distribution</h3>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <PieChart>
@@ -266,8 +266,8 @@ export const Dashboard: React.FC = () => {
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Radar Chart - Feature Importance */}
-                            <div className="p-4 border border-white/10 rounded-lg">
+                            {/* Radar Chart */}
+                            <div className="p-4 border">
                                 <h3 className="text-white mb-4">Feature Importance Analysis</h3>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData.radarData}>
@@ -292,8 +292,8 @@ export const Dashboard: React.FC = () => {
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Line Chart - Resource Utilization */}
-                            <div className="p-4 border border-white/10 rounded-lg">
+                            {/* Line Chart */}
+                            <div className="p-4 border">
                                 <h3 className="text-white mb-4">Resource Utilization Trends</h3>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <LineChart data={chartData.metricsData}>
