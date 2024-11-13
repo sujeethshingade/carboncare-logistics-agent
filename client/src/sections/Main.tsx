@@ -39,7 +39,7 @@ export const Main = () => {
         <section ref={sectionRef}>
             <div className="container py-16">
                 <div className="max-w-6xl mx-auto space-y-4">
-                    <motion.div className="border border-white py-24 overflow-hidden relative group min-h-[600px]"
+                    <motion.div className="border border-white py-24 overflow-hidden relative group min-h-[360px] md:min-h-[400px]"
                         style={{
                             backgroundPositionY,
                         }}>
@@ -55,8 +55,10 @@ export const Main = () => {
                             }}>
                         </motion.div>
                         <div className="relative">
-                            <h2 className="text-4xl md:text-5xl max-w-lg mx-auto text-center tracking-tighter font-medium">Optimize Your Carbon Footprint, Effortlessly.</h2>
-                            <Spline scene="https://prod.spline.design/UlZ9qLrac0IAUv3a/scene.splinecode" />
+                            <h2 className="text-3xl md:text-5xl max-w-lg mx-auto text-center tracking-tighter font-medium">Optimize Your Carbon Footprint, Effortlessly.</h2>
+                            <div className="mt-20 md:mt-8">
+                                <Spline className="-mb-80 md:-mb-40" scene="https://prod.spline.design/UlZ9qLrac0IAUv3a/scene.splinecode" />
+                            </div>
                         </div>
                     </motion.div>
                 </div>
