@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { Trash2, PanelRight, FileText, MessageCircle, Clock, Download } from 'lucide-react';
+import { Trash2, PanelRight, FileText, MessageCircle, Clock, Download, X } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -187,7 +187,16 @@ export const Sidebar = ({
                 className="w-[350px] p-0 bg-black border-r"
             >
                 <SheetHeader className="p-4 border-b">
-                    <SheetTitle className="mb-2 text-lg font-semibold text-white">Chat History</SheetTitle>
+                    <div className="flex items-center justify-between">
+                        <SheetTitle className="text-lg font-semibold text-white">Chat History</SheetTitle>
+                        <Button
+                            size="icon"
+                            onClick={() => setIsOpen(false)}
+                            className="h-8 w-8 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300 mr-1"
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
                     <input
                         type="text"
                         placeholder="Search conversations..."
