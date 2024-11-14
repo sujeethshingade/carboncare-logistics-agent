@@ -134,16 +134,16 @@ const ShippingKpiCards: React.FC<ShippingKpiCardsProps> = ({
     ];
 
     return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {data.map((item, index) => (
-                    <KpiCard
-                        key={index}
-                        title={item.title}
-                        value={item.value}
-                        icon={item.icon}
-                    />
-                ))}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            {data.map((item, index) => (
+                <KpiCard
+                    key={index}
+                    title={item.title}
+                    value={item.value}
+                    icon={item.icon}
+                />
+            ))}
+        </div>
     );
 };
 
@@ -304,7 +304,7 @@ export const Dashboard: React.FC = () => {
                     : [entry.results];
 
                 const result = entryResults.find(
-                    (r) => r.shipment_id === shipmentId
+                    (r) => r && r.shipment_id === shipmentId
                 );
 
                 return {
@@ -332,7 +332,7 @@ export const Dashboard: React.FC = () => {
         setChartData(chartData);
     }, [latestData, historyData, selectedShipmentId]);
 
-    const shipmentData = latestData?.results.find(
+    const shipmentData = latestData?.results?.find(
         (result) => result.shipment_id === selectedShipmentId
     );
 
