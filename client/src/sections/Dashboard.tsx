@@ -134,7 +134,7 @@ const ShippingKpiCards: React.FC<ShippingKpiCardsProps> = ({
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 mb-10">
             {data.map((item, index) => (
                 <KpiCard
                     key={index}
@@ -192,7 +192,7 @@ const ChartWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({
     title,
     children,
 }) => (
-    <div className="bg-black p-4 border mt-6 mb-6">
+    <div className="bg-black p-4 border">
         <h4 className="text-white mb-4 text-lg font-medium">{title}</h4>
         <div className="flex justify-center items-center">{children}</div>
     </div>
