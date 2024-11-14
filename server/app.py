@@ -1,5 +1,7 @@
+import json
 from flask import Flask, request, jsonify
 from typing import Dict, Any
+import pandas as pd
 import os
 from datetime import datetime
 from config import API_KEY
@@ -51,6 +53,41 @@ Please provide:
     
     return response.choices[0].message.content
 
+@app.route('/api/v1/sustainability/upload', methods=['POST'])
+def upload_file():
+    """Upload a CSV file, convert it to JSON, and delete the file."""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part in the request'}), 400
+        
+        file = request.files['file']
+        
+        if not file.filename.endswith('.csv'):
+            return jsonify({'error': 'File is not a CSV'}), 400
+        
+        file_path = os.path.join('/tmp', file.filename)  # Use a temp directory
+        file.save(file_path)
+        
+        df = pd.read_csv(file_path)
+        json_data = df.to_json(orient='records')
+
+        json_file_path = os.path.join('/tmp', 'uploaded_data.json')
+        with open(json_file_path, 'w') as json_file:
+            json.dump(json.loads(json_data), json_file)
+        
+        os.remove(file_path)
+        
+        return jsonify({
+            'message': 'File uploaded and converted successfully',
+            'data': json_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'error_type': type(e).__name__
+        }), 500
+
 @app.route('/api/v1/sustainability/analyze', methods=['POST'])
 def analyze_shipment():
     """Analyze shipment sustainability with LLM-enhanced insights"""
@@ -98,17 +135,28 @@ def analyze_shipment():
 def train_model():
     """Train the sustainability predictor with historical data"""
     try:
-        data = request.get_json()
+        json_file_path = os.path.join('/tmp', 'uploaded_data.json')
         
-        if 'historical_data' not in data or 'historical_scores' not in data:
+        if not os.path.exists(json_file_path):
+            return jsonify({'error': 'No uploaded data found for training'}), 404
+        
+        with open(json_file_path, 'r') as json_file:
+            historical_data = json.load(json_file)
+        
+        if 'historical_scores' not in request.json:
             return jsonify({
-                'error': 'Missing required training data',
-                'required_fields': ['historical_data', 'historical_scores']
+                'error': 'Missing required training scores',
+                'required_fields': ['data.shipments', 'data.sustainability_scores']
             }), 400
-            
+        
+        historical_scores = request.json['data']['sustainability_scores']
+
+        if len(historical_data) == 0:
+            return jsonify({'error': 'No historical data found for training'}), 404 
+        
         training_results = predictor.train(
-            data['historical_data'],
-            data['historical_scores']
+            historical_data,
+            historical_scores
         )
         
         return jsonify({
