@@ -13,12 +13,9 @@ import {
     Bar,
     XAxis,
     YAxis,
-    CartesianGrid,
     Legend,
     LineChart,
     Line,
-    AreaChart,
-    Area,
     ResponsiveContainer,
 } from 'recharts';
 import { getLatestAnalytics, getAnalyticsHistory } from '@/lib/analytics-service';
@@ -30,8 +27,9 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart2, X } from 'lucide-react';
+import { BarChart2, X, Truck, Package, AlertTriangle, Boxes } from 'lucide-react';
 
 interface Metrics {
     [key: string]: number | string;
@@ -70,6 +68,84 @@ interface SustainabilityAnalytics {
     num_shipments_analyzed: number;
     results: Result[];
 }
+
+interface KpiCardPropsType {
+    title: string;
+    value: string;
+    icon: React.ReactNode;
+    description?: string;
+}
+
+const KpiCard: React.FC<KpiCardPropsType> = ({
+    title,
+    value,
+    icon,
+    description,
+}) => {
+    return (
+        <Card className="bg-black rounded-none">
+            <CardContent className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <span className="text-white">{icon}</span>
+                    <h3 className="text-sm font-medium text-white">{title}</h3>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-2xl font-semibold text-white">{value}</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+interface ShippingKpiCardsProps {
+    shipmentId: string;
+    transportMode: string;
+    overallSustainabilityScore: number;
+    materialType: string;
+}
+
+const ShippingKpiCards: React.FC<ShippingKpiCardsProps> = ({
+    shipmentId,
+    transportMode,
+    overallSustainabilityScore,
+    materialType,
+}) => {
+    const data = [
+        {
+            title: 'Shipment ID',
+            value: shipmentId,
+            icon: <Package className="h-6 w-6" />,
+        },
+        {
+            title: 'Shipment Mode',
+            value: transportMode,
+            icon: <Truck className="h-6 w-6" />,
+        },
+        {
+            title: 'Overall Sustainability Score',
+            value: overallSustainabilityScore.toFixed(2),
+            icon: <AlertTriangle className="h-6 w-6" />,
+        },
+        {
+            title: 'Material Type',
+            value: materialType,
+            icon: <Boxes className="h-6 w-6" />,
+        },
+    ];
+
+    return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {data.map((item, index) => (
+                    <KpiCard
+                        key={index}
+                        title={item.title}
+                        value={item.value}
+                        icon={item.icon}
+                    />
+                ))}
+            </div>
+    );
+};
 
 interface ChartData {
     metricsData: Array<{ name: string } & Metrics>;
@@ -132,6 +208,7 @@ export const Dashboard: React.FC = () => {
     );
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [chartData, setChartData] = useState<ChartData | null>(null);
 
     const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(
         null
@@ -246,10 +323,17 @@ export const Dashboard: React.FC = () => {
         };
     };
 
-    const chartData = processChartData(
-        latestData,
-        historyData,
-        selectedShipmentId
+    useEffect(() => {
+        const chartData = processChartData(
+            latestData,
+            historyData,
+            selectedShipmentId
+        );
+        setChartData(chartData);
+    }, [latestData, historyData, selectedShipmentId]);
+
+    const shipmentData = latestData?.results.find(
+        (result) => result.shipment_id === selectedShipmentId
     );
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -272,7 +356,7 @@ export const Dashboard: React.FC = () => {
                         <Button
                             size="icon"
                             onClick={() => setIsOpen(false)}
-                            className="h-8 w-8 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300 mr-1"
+                            className="h-8 w-8 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300"
                         >
                             <X className="h-5 w-5" />
                         </Button>
@@ -288,42 +372,30 @@ export const Dashboard: React.FC = () => {
                                 onSelect={setSelectedShipmentId}
                             />
                         </div>
-
-                        {selectedShipmentId && latestData?.results && (
-                            <div className="bg-black p-4 border mb-8">
-                                <h4 className="text-white font-medium mb-2">
-                                    Shipment Details
-                                </h4>
-                                {latestData.results
-                                    .find((r) => r.shipment_id === selectedShipmentId)
-                                    ?.sustainability_analysis.processed_data.processed_data && (
-                                        <div className="text-white space-y-2">
-                                            <p>
-                                                <strong>Transport Mode:</strong>{' '}
-                                                {
-                                                    latestData.results
-                                                        .find((r) => r.shipment_id === selectedShipmentId)
-                                                        ?.sustainability_analysis.processed_data.processed_data
-                                                        .transport_mode
-                                                }
-                                            </p>
-                                            <p>
-                                                <strong>Distance:</strong>{' '}
-                                                {Number(
-                                                    latestData.results
-                                                        .find((r) => r.shipment_id === selectedShipmentId)
-                                                        ?.sustainability_analysis.metrics.distance || 0
-                                                ).toFixed(2)}{' '}
-                                                km
-                                            </p>
-                                        </div>
-                                    )}
-                            </div>
-                        )}
                     </div>
 
                     {loading && (
                         <div className="text-center text-white p-6">Loading...</div>
+                    )}
+
+                    {selectedShipmentId && shipmentData && (
+                        <div>
+                            <ShippingKpiCards
+                                shipmentId={selectedShipmentId}
+                                transportMode={
+                                    shipmentData.sustainability_analysis.processed_data.processed_data
+                                        .transport_mode || 'N/A'
+                                }
+                                overallSustainabilityScore={
+                                    shipmentData.sustainability_analysis.overall_sustainability_score ||
+                                    0
+                                }
+                                materialType={
+                                    String(shipmentData.sustainability_analysis.processed_data.processed_data
+                                        .material_type || 'N/A')
+                                }
+                            />
+                        </div>
                     )}
 
                     {!loading && !error && chartData && (

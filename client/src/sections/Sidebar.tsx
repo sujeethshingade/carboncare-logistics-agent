@@ -192,7 +192,7 @@ export const Sidebar = ({
                         <Button
                             size="icon"
                             onClick={() => setIsOpen(false)}
-                            className="h-8 w-8 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300 mr-1"
+                            className="h-8 w-8 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300"
                         >
                             <X className="h-5 w-5" />
                         </Button>
