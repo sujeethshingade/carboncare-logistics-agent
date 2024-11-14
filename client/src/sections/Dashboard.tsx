@@ -172,9 +172,12 @@ export const Dashboard: React.FC = () => {
         historyAnalytics: SustainabilityAnalytics[],
         shipmentId: string | null
     ): ChartData | null => {
-        if (!latestAnalytics?.results?.length || !shipmentId) return null;
+        if (!latestAnalytics || !shipmentId) return null;
+        const results = Array.isArray(latestAnalytics.results)
+            ? latestAnalytics.results
+            : [latestAnalytics.results];
 
-        const shipmentData = latestAnalytics.results.find(
+        const shipmentData = results.find(
             (result) => result.shipment_id === shipmentId
         );
 
@@ -209,28 +212,27 @@ export const Dashboard: React.FC = () => {
             {
                 name: `Shipment ${shipmentId}`,
                 actual: Number(
-                    shipmentData.sustainability_analysis.overall_sustainability_score.toFixed(
-                        2
-                    )
+                    shipmentData.sustainability_analysis.overall_sustainability_score.toFixed(2)
                 ),
                 predicted: Number(
-                    shipmentData.sustainability_analysis.predictions.predicted_score.toFixed(
-                        2
-                    )
+                    shipmentData.sustainability_analysis.predictions.predicted_score.toFixed(2)
                 ),
             },
         ];
 
         const historyChartData = historyAnalytics
             .map((entry) => {
-                const result = entry.results?.find(
+                const entryResults = Array.isArray(entry.results)
+                    ? entry.results
+                    : [entry.results];
+
+                const result = entryResults.find(
                     (r) => r.shipment_id === shipmentId
                 );
+
                 return {
                     timestamp: new Date(entry.timestamp).toLocaleDateString(),
-                    score:
-                        result?.sustainability_analysis.overall_sustainability_score ||
-                        null,
+                    score: result?.sustainability_analysis.overall_sustainability_score || null,
                 };
             })
             .filter((data) => data.score !== null);
@@ -249,14 +251,8 @@ export const Dashboard: React.FC = () => {
         historyData,
         selectedShipmentId
     );
-    const COLORS = [
-        '#0088FE',
-        '#00C49F',
-        '#FFBB28',
-        '#FF8042',
-        '#8884d8',
-        '#82ca9d',
-    ];
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -327,15 +323,11 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {loading && (
-                        <div className="text-center text-white">Loading...</div>
-                    )}
-
-                    {!loading && error && (
-                        <div className="text-center text-white">{error}</div>
+                        <div className="text-center text-white p-6">Loading...</div>
                     )}
 
                     {!loading && !error && chartData && (
-                        <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                             {/* Metrics Overview */}
                             <ChartWrapper title="Metrics Distribution">
@@ -358,14 +350,17 @@ export const Dashboard: React.FC = () => {
                                                 />
                                             ))}
                                         </Pie>
-                                        <Tooltip />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#000' }}
+                                            labelStyle={{ color: '#fff' }}
+                                            itemStyle={{ color: '#fff' }} />
                                         <Legend />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </ChartWrapper>
 
                             {/* Feature Importance */}
-                            <ChartWrapper title="Feature Importances">
+                            <ChartWrapper title="Feature Importance">
                                 <ResponsiveContainer width="100%" height={400}>
                                     <RadarChart data={chartData.radarData}>
                                         <PolarGrid />
@@ -378,6 +373,10 @@ export const Dashboard: React.FC = () => {
                                             fill="#8884d8"
                                             fillOpacity={0.6}
                                         />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#000' }}
+                                            labelStyle={{ color: '#fff' }}
+                                            itemStyle={{ color: '#fff' }} />
                                         <Legend />
                                     </RadarChart>
                                 </ResponsiveContainer>
@@ -387,10 +386,12 @@ export const Dashboard: React.FC = () => {
                             <ChartWrapper title="Sustainability Scores">
                                 <ResponsiveContainer width="100%" height={300}>
                                     <BarChart data={chartData.sustainabilityScores}>
-                                        <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="name" />
                                         <YAxis domain={[0, 100]} />
-                                        <Tooltip />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#000' }}
+                                            labelStyle={{ color: '#fff' }}
+                                            itemStyle={{ color: '#fff' }} />
                                         <Legend />
                                         <Bar
                                             dataKey="actual"
@@ -410,10 +411,12 @@ export const Dashboard: React.FC = () => {
                             <ChartWrapper title="Historical Sustainability Scores">
                                 <ResponsiveContainer width="100%" height={300}>
                                     <LineChart data={chartData.historyData}>
-                                        <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="timestamp" />
                                         <YAxis domain={[0, 100]} />
-                                        <Tooltip />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#000' }}
+                                            labelStyle={{ color: '#fff' }}
+                                            itemStyle={{ color: '#fff' }} />
                                         <Legend />
                                         <Line
                                             type="monotone"
@@ -424,52 +427,12 @@ export const Dashboard: React.FC = () => {
                                     </LineChart>
                                 </ResponsiveContainer>
                             </ChartWrapper>
-
-                            {/* Area Chart */}
-                            <ChartWrapper title="Score Trends">
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <AreaChart data={chartData.historyData}>
-                                        <defs>
-                                            <linearGradient
-                                                id="colorScore"
-                                                x1="0"
-                                                y1="0"
-                                                x2="0"
-                                                y2="1"
-                                            >
-                                                <stop
-                                                    offset="5%"
-                                                    stopColor="#8884d8"
-                                                    stopOpacity={0.8}
-                                                />
-                                                <stop
-                                                    offset="95%"
-                                                    stopColor="#8884d8"
-                                                    stopOpacity={0}
-                                                />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="timestamp" />
-                                        <YAxis domain={[0, 100]} />
-                                        <Tooltip />
-                                        <Legend />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="score"
-                                            stroke="#8884d8"
-                                            fill="url(#colorScore)"
-                                            name="Score Trend"
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </ChartWrapper>
                         </div>
                     )}
 
                     {!loading && !error && !chartData && (
-                        <div className="text-center text-white">
-                            No data available for the selected shipment.
+                        <div className="text-center text-white py-6">
+                            No Data Available
                         </div>
                     )}
                 </ScrollArea>
