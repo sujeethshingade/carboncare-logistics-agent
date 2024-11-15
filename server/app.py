@@ -1,9 +1,12 @@
 import json
+import time
 from flask import Flask, request, jsonify
 from typing import Dict, Any
 import pandas as pd
 import os
 from datetime import datetime
+
+import requests
 from config import API_KEY
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
@@ -152,6 +155,21 @@ def upload_csv():
         if login_response:        
             push_sustainability_data('/home/mayankch283/carboncare-logistics-agent/server/utils/ship7.json')
         
+        response = requests.post('http://localhost:5000/api/v1/sustainability/train', json={
+        'historical_data': data['data']['shipments'],
+        'historical_scores': data['data']['sustainability_scores']
+        })
+        time.sleep(3)
+
+        batch_payload = {
+            'data': {
+                'shipments': data['data']['shipments']
+            }
+        }
+        response = requests.post('http://localhost:5000/api/v1/sustainability/batch-analyze', json=batch_payload)
+
+        return jsonify({"message": "File processed successfully"}), 200
+
 
 
     except Exception as e:
