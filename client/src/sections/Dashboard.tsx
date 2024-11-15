@@ -14,8 +14,8 @@ import {
     XAxis,
     YAxis,
     Legend,
-    LineChart,
-    Line,
+    AreaChart,
+    Area,
     ResponsiveContainer,
 } from 'recharts';
 import { getLatestAnalytics, getAnalyticsHistory } from '@/lib/analytics-service';
@@ -29,7 +29,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart2, X, Truck, Package, AlertTriangle, Boxes } from 'lucide-react';
+import { LayoutDashboard, X, Truck, Package, AlertTriangle, Boxes } from 'lucide-react';
 
 interface Metrics {
     [key: string]: number | string;
@@ -54,11 +54,13 @@ interface SustainabilityAnalysis {
     overall_sustainability_score: number;
     predictions: Prediction;
     processed_data: {
+        [x: string]: any;
         processed_data: ProcessedData;
     };
 }
 
 interface Result {
+    processed_data: any;
     shipment_id: string;
     sustainability_analysis: SustainabilityAnalysis;
 }
@@ -80,7 +82,6 @@ const KpiCard: React.FC<KpiCardPropsType> = ({
     title,
     value,
     icon,
-    description,
 }) => {
     return (
         <Card className="bg-black rounded-none">
@@ -148,7 +149,6 @@ const ShippingKpiCards: React.FC<ShippingKpiCardsProps> = ({
 };
 
 interface ChartData {
-    metricsData: Array<{ name: string } & Metrics>;
     sustainabilityScores: Array<{
         name: string;
         actual: number;
@@ -162,9 +162,12 @@ interface ChartData {
         subject: string;
         importance: number;
     }>;
-    historyData: Array<{
+    sustainabilityMetrics: Array<{
         timestamp: string;
-        score: number | null;
+        carbon_footprint: number;
+        energy_efficiency: number;
+        resource_efficiency: number;
+        waste_reduction: number;
     }>;
 }
 
@@ -297,29 +300,19 @@ export const Dashboard: React.FC = () => {
             },
         ];
 
-        const historyChartData = historyAnalytics
-            .map((entry) => {
-                const entryResults = Array.isArray(entry.results)
-                    ? entry.results
-                    : [entry.results];
-
-                const result = entryResults.find(
-                    (r) => r && r.shipment_id === shipmentId
-                );
-
-                return {
-                    timestamp: new Date(entry.timestamp).toLocaleDateString(),
-                    score: result?.sustainability_analysis.overall_sustainability_score || null,
-                };
-            })
-            .filter((data) => data.score !== null);
+        const sustainabilityMetrics = results.map((result) => ({
+            timestamp: new Date(result?.processed_data?.timestamp || Date.now()).toLocaleDateString(),
+            carbon_footprint: result?.sustainability_analysis?.processed_data?.analytics?.sustainability_metrics?.carbon_footprint || 0,
+            energy_efficiency: result?.sustainability_analysis?.processed_data?.analytics?.sustainability_metrics?.energy_efficiency || 0,
+            resource_efficiency: result?.sustainability_analysis?.processed_data?.analytics?.sustainability_metrics?.resource_efficiency || 0,
+            waste_reduction: result?.sustainability_analysis?.processed_data?.analytics?.sustainability_metrics?.waste_reduction || 0
+        }));
 
         return {
-            metricsData: [{ name: shipmentId, ...metrics }],
             sustainabilityScores,
+            sustainabilityMetrics,
             pieData,
             radarData,
-            historyData: historyChartData,
         };
     };
 
@@ -346,7 +339,7 @@ export const Dashboard: React.FC = () => {
                     className="bg-black text-white hover:bg-black hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300"
                     aria-label="Open Dashboard"
                 >
-                    <BarChart2 className="h-5 w-5" />
+                    <LayoutDashboard className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" size="full" className="p-0 border-none bg-black">
@@ -411,7 +404,7 @@ export const Dashboard: React.FC = () => {
                                             nameKey="name"
                                             cx="50%"
                                             cy="50%"
-                                            outerRadius={150}
+                                            outerRadius={120}
                                             fill="#8884d8"
                                             label
                                         >
@@ -437,7 +430,7 @@ export const Dashboard: React.FC = () => {
                                     <RadarChart data={chartData.radarData}>
                                         <PolarGrid />
                                         <PolarAngleAxis dataKey="subject" />
-                                        <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                                        <PolarRadiusAxis angle={60} domain={[0, 100]} />
                                         <Radar
                                             name="Importance"
                                             dataKey="importance"
@@ -456,9 +449,9 @@ export const Dashboard: React.FC = () => {
 
                             {/* Sustainability Scores */}
                             <ChartWrapper title="Sustainability Scores">
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={400}>
                                     <BarChart data={chartData.sustainabilityScores}>
-                                        <XAxis dataKey="name" />
+                                        <XAxis dataKey="none" />
                                         <YAxis domain={[0, 100]} />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: '#000' }}
@@ -479,25 +472,55 @@ export const Dashboard: React.FC = () => {
                                 </ResponsiveContainer>
                             </ChartWrapper>
 
-                            {/* Historical Trends */}
-                            <ChartWrapper title="Historical Sustainability Scores">
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <LineChart data={chartData.historyData}>
-                                        <XAxis dataKey="timestamp" />
-                                        <YAxis domain={[0, 100]} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#000' }}
-                                            labelStyle={{ color: '#fff' }}
-                                            itemStyle={{ color: '#fff' }} />
-                                        <Legend />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="score"
-                                            stroke="#8884d8"
-                                            name="Sustainability Score"
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
+                            {/* Sustainability Metrics */}
+                            <ChartWrapper title="Sustainability Metrics">
+                                    <ResponsiveContainer width="100%" height={400}>
+                                        <AreaChart
+                                            data={chartData.sustainabilityMetrics}
+                                            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                        >
+                                            <XAxis dataKey="none" />
+                                            <YAxis domain={[0, 100]} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#000' }}
+                                                labelStyle={{ color: '#fff' }}
+                                                itemStyle={{ color: '#fff' }}
+                                            />
+                                            <Legend />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="carbon_footprint"
+                                                stackId="1"
+                                                stroke="#8884d8"
+                                                fill="#8884d8"
+                                                name="Carbon Footprint"
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="energy_efficiency"
+                                                stackId="1"
+                                                stroke="#82ca9d"
+                                                fill="#82ca9d"
+                                                name="Energy Efficiency"
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="resource_efficiency"
+                                                stackId="1"
+                                                stroke="#ffc658"
+                                                fill="#ffc658"
+                                                name="Resource Efficiency"
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="waste_reduction"
+                                                stackId="1"
+                                                stroke="#ff8042"
+                                                fill="#ff8042"
+                                                name="Waste Reduction"
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
                             </ChartWrapper>
                         </div>
                     )}
