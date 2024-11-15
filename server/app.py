@@ -53,35 +53,55 @@ Please provide:
     
     return response.choices[0].message.content
 
+
+import csv
+
 @app.route('/api/v1/sustainability/upload', methods=['POST'])
-def upload_file():
-    """Upload a CSV file, convert it to JSON, and delete the file."""
+def upload_csv():
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file part in the request'}), 400
-        
-        file = request.files['file']
-        
-        if not file.filename.endswith('.csv'):
-            return jsonify({'error': 'File is not a CSV'}), 400
-        
-        file_path = os.path.join('/tmp', file.filename)  # Use a temp directory
-        file.save(file_path)
-        
-        df = pd.read_csv(file_path)
-        json_data = df.to_json(orient='records')
 
-        json_file_path = os.path.join('/tmp', 'uploaded_data.json')
-        with open(json_file_path, 'w') as json_file:
-            json.dump(json.loads(json_data), json_file)
-        
-        os.remove(file_path)
-        
-        return jsonify({
-            'message': 'File uploaded and converted successfully',
-            'data': json_data
-        })
-        
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
+
+        # Read CSV file
+        csv_file = file.read().decode('utf-8').splitlines()
+        reader = csv.DictReader(csv_file)
+
+        shipments = []
+        sustainability_scores = []
+
+        for row in reader:
+            shipment = {
+                "shipment_id": row["shipment_id"],
+                "timestamp": row["timestamp"],
+                "origin": {
+                    "lat": float(row["origin_lat"]),
+                    "long": float(row["origin_long"])
+                },
+                "destination": {
+                    "lat": float(row["destination_lat"]),
+                    "long": float(row["destination_long"])
+                },
+                "transport_mode": row["transport_mode"],
+                "packages": json.loads(row["packages"])  # 'packages' should be a JSON string in the CSV
+            }
+            shipments.append(shipment)
+            sustainability_scores.append(float(row["sustainability_score"]))
+
+        data = {
+            "data": {
+                "shipments": shipments,
+                "sustainability_scores": sustainability_scores
+            }
+        }
+
+
+        return jsonify(data)
+
     except Exception as e:
         return jsonify({
             'error': str(e),
