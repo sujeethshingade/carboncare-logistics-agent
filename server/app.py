@@ -5,13 +5,17 @@ from typing import Dict, Any
 import pandas as pd
 import os
 from datetime import datetime
-
+from io import StringIO
+import traceback
 import requests
 from config import API_KEY
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import datetime
+from flask_cors import CORS
+from supascript import push_sustainability_data
+
 
 
 load_dotenv('.env.local')
@@ -26,6 +30,20 @@ from sustainability_scoring import (
 )
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["OPTIONS", "POST", "GET"],
+        "allow_headers": ["Content-Type"]
+    }
+})
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # Initialize components
 pipeline = LogisticsSustainabilityPipeline()
@@ -65,83 +83,66 @@ Please provide:
     
     return response.choices[0].message.content
 
-def login_with_email(email: str, password: str):
-    try:
-        response = supabase.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
-        print("Login successful")
-        return response
-    except Exception as e:
-        print("Login failed:", str(e))
-        return None
-def push_sustainability_data(json_file):
-    try:
-        # Read the JSON file as a string and parse it into a dictionary
-        with open(json_file, 'r') as file:
-            json_data_str = file.read()
-        json_data = json.loads(json_data_str)
-
-        # Get the authenticated user's ID
-        user_response = supabase.auth.get_user()
-        if not user_response.user:
-            print("User is not authenticated.")
-            return
-        user_id = user_response.user.id
-
-        dt_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        num_shipments = json_data['num_shipments_analyzed']
-
-        # Insert the data into the sustainability_analytics table
-        response = supabase.table("sustainability_analytics").insert({
-            "data": json.dumps(json_data),  # Convert the dictionary back to a JSON string
-            "user_id": user_id,
-            "timestamp": dt_str,
-            "num_shipments": num_shipments
-        }).execute()
-
-    except Exception as e:
-        print("Error pushing sustainability data:", str(e))
-
-
 import csv
 
-@app.route('/api/v1/sustainability/upload', methods=['POST'])
+@app.route('/api/v1/sustainability/upload', methods=['POST', 'OPTIONS'])
 def upload_csv():
+    if request.method == 'OPTIONS':
+        return jsonify({}), 200
+
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file part in the request'}), 400
 
         file = request.files['file']
-
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
 
-        # Read CSV file
-        csv_file = file.read().decode('utf-8').splitlines()
-        reader = csv.DictReader(csv_file)
+        # Read CSV file into pandas DataFrame
+        csv_content = StringIO(file.stream.read().decode("UTF-8"))
+        df = pd.read_csv(csv_content)
 
+        # Validate required columns
+        required_columns = [
+            "shipment_id", "timestamp",
+            "origin_lat", "origin_long",
+            "destination_lat", "destination_long",
+            "transport_mode", "packages",
+            "sustainability_score"
+        ]
+
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            return jsonify({
+                'error': f'Missing required columns: {", ".join(missing_columns)}'
+            }), 400
+
+        # Convert DataFrame to required format
         shipments = []
         sustainability_scores = []
 
-        for row in reader:
-            shipment = {
-                "shipment_id": row["shipment_id"],
-                "timestamp": row["timestamp"],
-                "origin": {
-                    "lat": float(row["origin_lat"]),
-                    "long": float(row["origin_long"])
-                },
-                "destination": {
-                    "lat": float(row["destination_lat"]),
-                    "long": float(row["destination_long"])
-                },
-                "transport_mode": row["transport_mode"],
-                "packages": json.loads(row["packages"])  # 'packages' should be a JSON string in the CSV
-            }
-            shipments.append(shipment)
-            sustainability_scores.append(float(row["sustainability_score"]))
+        for _, row in df.iterrows():
+            try:
+                shipment = {
+                    "shipment_id": str(row["shipment_id"]),
+                    "timestamp": str(row["timestamp"]),
+                    "origin": {
+                        "lat": float(row["origin_lat"]),
+                        "long": float(row["origin_long"])
+                    },
+                    "destination": {
+                        "lat": float(row["destination_lat"]),
+                        "long": float(row["destination_long"])
+                    },
+                    "transport_mode": str(row["transport_mode"]),
+                    "packages": json.loads(row["packages"] if isinstance(row["packages"], str) else row["packages"])
+                }
+                shipments.append(shipment)
+                sustainability_scores.append(float(row["sustainability_score"]))
+            except (ValueError, json.JSONDecodeError) as e:
+                return jsonify({
+                    'error': f'Error processing row {row["shipment_id"]}: {str(e)}'
+                }), 400
 
         data = {
             "data": {
@@ -150,29 +151,50 @@ def upload_csv():
             }
         }
 
-        login_response = login_with_email("soupysoup1000@gmail.com", "123456")
-    
-        if login_response:        
-            push_sustainability_data('/home/mayankch283/carboncare-logistics-agent/server/utils/ship7.json')
-        
-        response = requests.post('http://localhost:5000/api/v1/sustainability/train', json={
-        'historical_data': data['data']['shipments'],
-        'historical_scores': data['data']['sustainability_scores']
-        })
-        time.sleep(3)
+        # Save the uploaded data
+        json_file_path = os.path.join('/home/mayankch283/carboncare-logistics-agent/uploads', 'uploaded_data.json')
+        with open(json_file_path, 'w') as json_file:
+            json.dump(data, json_file)
 
-        batch_payload = {
-            'data': {
-                'shipments': data['data']['shipments']
-            }
-        }
-        response = requests.post('http://localhost:5000/api/v1/sustainability/batch-analyze', json=batch_payload)
+        # Train the model
+        train_result = train_model()
 
-        return jsonify({"message": "File processed successfully"}), 200
+        if isinstance(train_result, tuple):
+            response_data, status_code = train_result
+            if status_code != 200:
+                return jsonify({
+                    'error': 'Training failed',
+                    'details': str(response_data)
+                }), status_code
 
+            if hasattr(response_data, 'get_json'):
+                response_data = response_data.get_json()
 
+            batch_analysis_result = perform_batch_analysis({"data": {"shipments": shipments}})
+            if isinstance(batch_analysis_result, tuple):
+                return batch_analysis_result  # Error response
+            else:
+                # Push the produced JSON file to Supabase
+                try:
+                    push_sustainability_data(json_file_path)
+                except Exception as e:
+                    app.logger.error(f"Error pushing data to Supabase: {str(e)}")
+                    return jsonify({
+                        'error': 'Failed to push data to Supabase',
+                        'details': str(e)
+                    }), 500
+
+                return jsonify({
+                    "message": f"Successfully processed {len(shipments)} shipments",
+                    "training_results": response_data.get('training_results', {}) if isinstance(response_data, dict) else {},
+                    "batch_analysis": batch_analysis_result
+                }), 200
+        else:
+            app.logger.error(f"Invalid train_result type: {type(train_result)}")
+            return jsonify({'error': 'Invalid response from training model'}), 500
 
     except Exception as e:
+        app.logger.error(f"Upload error: {str(e)}")
         return jsonify({
             'error': str(e),
             'error_type': type(e).__name__
@@ -186,7 +208,7 @@ def analyze_shipment():
 
         # Add timestamp if not present
         if 'timestamp' not in data:
-            data['timestamp'] = datetime.now().isoformat()
+            data['timestamp'] = datetime.datetime.now().isoformat()
         
         # Validate required fields
         required_fields = ['shipment_id', 'origin', 'destination', 'transport_mode', 'packages']
@@ -207,7 +229,7 @@ def analyze_shipment():
         
         # Combine results
         response = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.datetime.now().isoformat(),
             'shipment_id': data['shipment_id'],
             'sustainability_analysis': analysis_results,
             'llm_insights': llm_insights,
@@ -225,36 +247,46 @@ def analyze_shipment():
 def train_model():
     """Train the sustainability predictor with historical data"""
     try:
-        json_file_path = os.path.join('/tmp', 'uploaded_data.json')
+        json_file_path = os.path.join('/home/mayankch283/carboncare-logistics-agent/uploads', 'uploaded_data.json')
         
         if not os.path.exists(json_file_path):
+            app.logger.error(f"File not found: {json_file_path}")
             return jsonify({'error': 'No uploaded data found for training'}), 404
         
         with open(json_file_path, 'r') as json_file:
             historical_data = json.load(json_file)
         
-        if 'historical_scores' not in request.json:
+        app.logger.info(f"Loaded data: {json.dumps(historical_data)[:200]}...")
+        
+        if not historical_data.get('data') or \
+           not historical_data['data'].get('shipments') or \
+           not historical_data['data'].get('sustainability_scores'):
+            app.logger.error("Invalid data structure")
             return jsonify({
-                'error': 'Missing required training scores',
+                'error': 'Missing required training data',
                 'required_fields': ['data.shipments', 'data.sustainability_scores']
             }), 400
         
-        historical_scores = request.json['data']['sustainability_scores']
+        shipments = historical_data['data']['shipments']
+        sustainability_scores = historical_data['data']['sustainability_scores']
 
-        if len(historical_data) == 0:
+        if len(shipments) == 0:
+            app.logger.error("No shipments found")
             return jsonify({'error': 'No historical data found for training'}), 404 
         
+        app.logger.info(f"Training model with {len(shipments)} shipments")
         training_results = predictor.train(
-            historical_data,
-            historical_scores
+            shipments,
+            sustainability_scores
         )
         
         return jsonify({
             'message': 'Model trained successfully',
             'training_results': training_results
-        })
+        }), 200
         
     except Exception as e:
+        app.logger.error(f"Training error: {str(e)}")
         return jsonify({
             'error': str(e),
             'error_type': type(e).__name__
@@ -265,38 +297,44 @@ def batch_analyze():
     """Analyze multiple shipments in batch"""
     try:
         data = request.get_json()
-        
-        if 'shipments' not in data["data"]:
-            return jsonify({
-                'error': 'Missing shipments data',
-                'required_fields': ['shipments']
-            }), 400
-            
-        results = []
-        for shipment in data["data"]['shipments']:
-            analysis = analyze_sustainability(pipeline, shipment, predictor)
-            llm_insights = get_llm_analysis(
-                analysis['metrics'],
-                analysis['overall_sustainability_score']
-            )
-            
-            results.append({
-                'shipment_id': shipment['shipment_id'],
-                'sustainability_analysis': analysis,
-                'llm_insights': llm_insights
-            })
-            
-        return jsonify({
-            'timestamp': datetime.now().isoformat(),
-            'num_shipments_analyzed': len(results),
-            'results': results
-        })
-        
+        result = perform_batch_analysis(data)
+        if isinstance(result, tuple):
+            return result  # Error response
+        else:
+            return jsonify(result)
     except Exception as e:
         return jsonify({
             'error': str(e),
             'error_type': type(e).__name__
         }), 500
+    
+def perform_batch_analysis(data):
+    """Perform batch analysis on shipments data"""
+    if 'shipments' not in data["data"]:
+        return jsonify({
+            'error': 'Missing shipments data',
+            'required_fields': ['shipments']
+        }), 400
+
+    results = []
+    for shipment in data["data"]['shipments']:
+        analysis = analyze_sustainability(pipeline, shipment, predictor)
+        llm_insights = get_llm_analysis(
+            analysis['metrics'],
+            analysis['overall_sustainability_score']
+        )
+
+        results.append({
+            'shipment_id': shipment['shipment_id'],
+            'sustainability_analysis': analysis,
+            'llm_insights': llm_insights
+        })
+
+    return {
+        'timestamp': datetime.datetime.now().isoformat(),
+        'num_shipments_analyzed': len(results),
+        'results': results
+    }
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
