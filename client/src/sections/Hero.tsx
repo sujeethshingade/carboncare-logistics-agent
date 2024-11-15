@@ -263,6 +263,9 @@ export const Hero = () => {
                     file_type: file.type
                 });
 
+                if (fileError) throw fileError;
+                setMessages(prev => [...prev, { text: 'File uploaded successfully', type: 'agent' }]);
+                
         } catch (err) {
             console.error('Error uploading file:', err);
         } finally {
@@ -405,6 +408,7 @@ export const Hero = () => {
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
+                            accept=".csv"
                             onChange={handleFileUpload}
                         />
                     </div>
