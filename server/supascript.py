@@ -71,11 +71,9 @@ def push_sustainability_data(json_file):
 
         # Insert the data into the sustainability_analytics table
         response = supabase.table("sustainability_analytics").insert({
-            "data": json.dumps(json_data),  # Convert the dictionary back to a JSON string
+            "data": json.dumps(json_data),
             "timestamp": dt_str,
             "num_shipments": num_shipments
-            # If you still need to associate with a user, consider adding a server-side identifier
-            # "user_id": "server_processed"  # Example placeholder
         }).execute()
 
         if response.status_code == 201:
