@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { Sidebar } from '@/sections/Sidebar';
 import { Dashboard } from '@/sections/Dashboard'
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@/Context/ThemeContext';
 import { toast } from '@/components/ui/use-toast';
 
 type ChatTopic = {
@@ -25,7 +26,7 @@ export const Hero: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const [accessToken, setAccessToken] = useState<string | null>(null);
+    const [accessToken, setAccessToken] = useState<string | null>(null);const { theme }=useTheme();
 
     const sustainabilityTopics: ChatTopic[] = [
         {
@@ -359,7 +360,7 @@ export const Hero: React.FC = () => {
             console.error('Upload error:', error);
             toast({
                 title: "Error",
-                description: error.message || "Failed to upload file",
+                description: (error instanceof Error ? error.message : "Failed to upload file"),
                 variant: "destructive"
             });
         } finally {
@@ -394,7 +395,7 @@ export const Hero: React.FC = () => {
     };
 
     return (
-        <div className="container py-16">
+        <div className={`container py-16 ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>
             {user ? (
                 <>
                     <Sidebar
@@ -412,21 +413,21 @@ export const Hero: React.FC = () => {
                                 <button
                                     key={index}
                                     onClick={() => handleTopicClick(topic)}
-                                    className="border bg-black text-white hover:border-primary transition-colors duration-300 p-4"
+                                    className={`p-4 duration-300 transition-colors hover:border-primary border ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-200 text-black'}`}
                                     disabled={isLoading}
                                 >
                                     {topic.title}
                                 </button>
                             ))}
                         </div>
-                        <Card className="bg-black border rounded-none">
+                        <Card className={`${theme === 'dark' ? 'bg-black' : 'bg-white'} rounded-none`}>
                             <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="text-white text-lg font-semibold">
+                                <CardTitle className={`font-semibold text-lg ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
                                     CarbonCare Agent
                                 </CardTitle>
                                 <button
                                     onClick={handleClearChat}
-                                    className="text-white hover:text-primary transition-colors duration-300 flex items-center gap-2"
+                                    className={`${theme === 'dark' ? 'text-white' : 'text-black'} hover:text-primary transition-colors duration-300 flex items-center gap-2`}
                                     disabled={isLoading}
                                 >
                                     <RefreshCcw className="w-5 h-5" />
@@ -438,7 +439,7 @@ export const Hero: React.FC = () => {
                                     <ScrollArea ref={scrollAreaRef} className="flex-grow pr-4 -mr-4">
                                         <div className="space-y-4">
                                             {messages.length === 0 ? (
-                                                <div className="text-center flex items-center justify-center h-full text-white">
+                                                <div className={`text-center flex items-center justify-center h-full ${theme === 'dark' ? 'text-white' : 'text-black'} `}>
                                                     Upload a document or Start a conversation...
                                                 </div>
                                             ) : (
@@ -478,20 +479,20 @@ export const Hero: React.FC = () => {
                                             onChange={(e) => setInputMessage(e.target.value)}
                                             onKeyUp={(e) => e.key === 'Enter' && handleSendMessage()}
                                             placeholder="Send a message..."
-                                            className="w-full bg-black text-white border pl-4 pr-20 py-3 focus:outline-none focus:border-primary"
+                                            className={`w-full ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-200 text-black'} border pl-4 pr-20 py-3 focus:outline-none focus:border-primary`}
                                             disabled={isLoading}
                                         />
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-4">
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="text-white hover:text-primary transition-colors duration-300"
+                                                className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
                                                 disabled={isLoading}
                                             >
                                                 <Paperclip className="w-5 h-5" />
                                             </button>
                                             <button
                                                 onClick={handleSendMessage}
-                                                className="text-white hover:text-primary transition-colors duration-300"
+                                                className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
                                                 disabled={isLoading}
                                             >
                                                 <ArrowUp className="w-5 h-5" />

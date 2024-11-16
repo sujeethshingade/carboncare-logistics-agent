@@ -4,6 +4,7 @@ import gridLines from "@/assets/grid-lines.png";
 import Spline from "@splinetool/react-spline";
 import { motion, useMotionTemplate, useMotionValue, useScroll, useTransform } from "framer-motion";
 import { RefObject, useEffect, useRef } from "react";
+import { useTheme } from "@/Context/ThemeContext";
 
 const useRelativeMousePosition = (to: RefObject<HTMLElement>) => {
     const mouseX = useMotionValue(0);
@@ -31,6 +32,8 @@ export const Main = () => {
         offset: ["start end", "end start"],
     });
 
+    const { theme } = useTheme();
+
     const backgroundPositionY = useTransform(scrollYProgress, [0, 1], [-300, 300]);
     const [mouseX, mouseY] = useRelativeMousePosition(borderedDivRef);
     const maskImage = useMotionTemplate`radial-gradient(50% 50% at ${mouseX}px ${mouseY}px, black, transparent)`;
@@ -39,19 +42,22 @@ export const Main = () => {
         <section ref={sectionRef}>
             <div className="container py-16">
                 <div className="max-w-6xl mx-auto space-y-4">
-                    <motion.div className="border border-white py-24 overflow-hidden relative group min-h-[360px] md:min-h-[400px]"
+                    <motion.div className={`border py-24 overflow-hidden relative group min-h-[360px] md:min-h-[400px] ${theme === 'dark' ? 'border-white' : 'border-black'}`}
                         style={{
                             backgroundPositionY,
                         }}>
                         <div className="absolute inset-0 bg-primary bg-blend-overlay [mask-image:radial-gradient(50%_50%_at_50%_35%,black,transparent)] group-hover:opacity-0 transition duration-700"
                             style={{
                                 backgroundImage: `url(${gridLines.src})`,
+                                
+                                
                             }}>
                         </div>
                         <motion.div ref={borderedDivRef} className="absolute inset-0 bg-primary bg-blend-overlay opacity-0 group-hover:opacity-100 transition duration-700"
                             style={{
                                 maskImage,
                                 backgroundImage: `url(${gridLines.src})`,
+                                
                             }}>
                         </motion.div>
                         <div className="relative">

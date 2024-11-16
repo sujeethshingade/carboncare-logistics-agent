@@ -64,3 +64,72 @@
     @apply bg-background text-foreground;
   }
 }
+:root {
+  --bg-color-light:  #ffffff;
+  --text-color-light: #000000;
+  --bg-color-dark: #000000;
+  --text-color-dark: #ffffff;
+}
+
+/* For light theme */
+[data-theme='light'] {
+  --bg-color:  #ffffff; /* White background */
+  --text-color: #000000; /* Black text */
+}
+
+/* For dark theme */
+[data-theme='dark'] {
+  --bg-color: #000000; /* Black background */
+  --text-color: #ffffff; /* White text */
+}
+
+/* Apply the variables globally */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.theme-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.theme-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background-color: white;
+  transition: 0.4s;
+  top: 3px;
+  left: 3px;
+}
+
+.theme-switch-input:checked + .theme-switch-slider {
+  background-color: #4caf50;
+}
+
+.theme-switch-input:checked + .theme-switch-slider:before {
+  transform: translateX(26px);
+}

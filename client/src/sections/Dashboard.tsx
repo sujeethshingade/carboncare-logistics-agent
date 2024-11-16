@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '@/Context/ThemeContext';
 import {
     PieChart,
     Pie,
@@ -77,21 +78,21 @@ interface KpiCardPropsType {
     icon: React.ReactNode;
     description?: string;
 }
-
 const KpiCard: React.FC<KpiCardPropsType> = ({
     title,
     value,
     icon,
 }) => {
+    const { theme }=useTheme();
     return (
-        <Card className="bg-black rounded-none">
+        <Card className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  rounded-none`}>
             <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                    <span className="text-white">{icon}</span>
-                    <h3 className="text-sm font-medium text-white">{title}</h3>
+                    <span className={`${theme === 'dark' ? 'text-white' : 'text-black'} `}>{icon}</span>
+                    <h3 className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-black'} `}>{title}</h3>
                 </div>
                 <div className="space-y-1">
-                    <p className="text-2xl font-semibold text-white">{value}</p>
+                    <p className={`text-2xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `}>{value}</p>
                 </div>
             </CardContent>
         </Card>
@@ -176,11 +177,12 @@ const ShipmentSelector: React.FC<{
     selectedId: string | null;
     onSelect: (id: string) => void;
 }> = ({ shipments, selectedId, onSelect }) => {
+    const { theme }=useTheme();
     return (
         <select
             value={selectedId || ''}
             onChange={(e) => onSelect(e.target.value)}
-            className="p-2 border bg-black text-white w-full cursor-pointer focus:border-primary [&>option]:bg-black"
+            className={`p-2 border ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} w-full cursor-pointer focus:border-primary [&>option]:${theme === 'dark' ? 'bg-black' : 'bg-white'} `}
         >
             {shipments.map((id) => (
                 <option key={id} value={id}>
@@ -194,12 +196,14 @@ const ShipmentSelector: React.FC<{
 const ChartWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({
     title,
     children,
-}) => (
-    <div className="bg-black p-4 border">
-        <h4 className="text-white mb-4 text-lg font-medium">{title}</h4>
+    
+}) =>{const { theme }=useTheme();
+    return(
+    <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  p-4 border`}>
+        <h4 className={`${theme === 'dark' ? 'text-white' : 'text-black'}  mb-4 text-lg font-medium`}>{title}</h4>
         <div className="flex justify-center items-center">{children}</div>
     </div>
-);
+)};
 
 export const Dashboard: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -330,26 +334,27 @@ export const Dashboard: React.FC = () => {
     );
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+    const { theme }=useTheme();
 
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
                 <Button
                     size="icon"
-                    className="bg-black text-white hover:bg-black hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300"
+                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}  hover:bg-black hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300`}
                     aria-label="Open Dashboard"
                 >
                     <LayoutDashboard className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="right" size="full" className="p-0 border-none bg-black">
+            <SheetContent side="right" size="full" className={`p-0 border-none ${theme === 'dark' ? 'bg-black' : 'bg-white'}`}>
                 <SheetHeader className="p-4 border-b">
                     <div className="flex items-center justify-between">
-                        <SheetTitle className="text-lg font-semibold text-white">Analytics Dashboard</SheetTitle>
+                        <SheetTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `}>Analytics Dashboard</SheetTitle>
                         <Button
                             size="icon"
                             onClick={() => setIsOpen(false)}
-                            className="h-8 w-8 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300"
+                            className={`h-8 w-8 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-primary hover:bg-black transition-colors duration-300`}
                         >
                             <X className="h-5 w-5" />
                         </Button>
@@ -358,7 +363,7 @@ export const Dashboard: React.FC = () => {
                 <ScrollArea className="h-[calc(100vh-100px)] p-4">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-white mb-2">Choose Shipment</label>
+                            <label className={`block ${theme === 'dark' ? 'text-white' : 'text-black'}  mb-2`}>Choose Shipment</label>
                             <ShipmentSelector
                                 shipments={availableShipments}
                                 selectedId={selectedShipmentId}
@@ -368,7 +373,7 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {loading && (
-                        <div className="text-center text-white p-6">Loading...</div>
+                        <div className={`text-center ${theme === 'dark' ? 'text-white' : 'text-black'}  p-6`}>Loading...</div>
                     )}
 
                     {selectedShipmentId && shipmentData && (
@@ -526,7 +531,7 @@ export const Dashboard: React.FC = () => {
                     )}
 
                     {!loading && !error && !chartData && (
-                        <div className="text-center text-white py-6">
+                        <div className={`text-center ${theme === 'dark' ? 'text-white' : 'text-black'}  py-6`}>
                             No Data Available
                         </div>
                     )}
