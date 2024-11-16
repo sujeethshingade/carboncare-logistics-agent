@@ -6,6 +6,7 @@ import Logo from '@/assets/logo.png';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useTheme } from '@/Context/ThemeContext';
 
 const LoginPage = () => {
     const router = useRouter();
@@ -13,6 +14,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const { theme }=useTheme();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,18 +54,18 @@ const LoginPage = () => {
                     </Link>
                 </h1>
             </div>
-            <form className="border px-8 pt-6 pb-8 mb-4 w-96" onSubmit={handleLogin}>
+            <form className={`border ${theme === 'dark' ? 'border-white' : 'border-black'} px-8 pt-6 pb-8 mb-4 w-96`} onSubmit={handleLogin}>
                 {error && (
                     <div className="mb-4 text-red-500 text-sm text-center">
                         {error}
                     </div>
                 )}
                 <div className="mb-4">
-                    <label className="block text-white text-sm font-bold mb-2" htmlFor="email">
+                    <label className={`block ${theme === 'dark' ? 'text-white' : 'text-black'}  text-sm font-bold mb-2`} htmlFor="email">
                         Email
                     </label>
                     <input
-                        className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
+                        className={`shadow appearance-none border w-full py-2 px-3 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-200 text-black'} leading-tight focus:outline-none focus:shadow-outline focus:border-primary`}
                         id="email"
                         type="email"
                         placeholder="enter your email"
@@ -73,11 +75,11 @@ const LoginPage = () => {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block text-white text-sm font-bold mb-2" htmlFor="password">
+                    <label className={`block ${theme === 'dark' ? 'text-white' : 'text-black'}  text-sm font-bold mb-2`} htmlFor="password">
                         Password
                     </label>
                     <input
-                        className="shadow appearance-none border w-full py-2 px-3 bg-black text-white leading-tight focus:outline-none focus:shadow-outline focus:border-primary"
+                        className={`shadow appearance-none border w-full py-2 px-3 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-200 text-black'} leading-tight focus:outline-none focus:shadow-outline focus:border-primary`}
                         id="password"
                         type="password"
                         placeholder="enter your password"
@@ -88,7 +90,7 @@ const LoginPage = () => {
                 </div>
                 <div className="flex items-center justify-center py-2">
                     <button
-                        className="bg-black hover:text-primary text-white border font-bold py-2 px-4 focus:outline-none focus:shadow-outline disabled:opacity-50"
+                        className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-200 text-black'} hover:text-primary border font-bold py-2 px-4 focus:outline-none focus:shadow-outline disabled:opacity-50`}
                         type="submit"
                         disabled={loading}
                     >

@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/Context/ThemeContext';
 
 type Session = {
     id: string;
@@ -37,6 +38,7 @@ export const Sidebar = ({
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const { theme }=useTheme();
 
     useEffect(() => {
         if (isOpen) {
@@ -176,7 +178,7 @@ export const Sidebar = ({
             <SheetTrigger asChild>
                 <Button
                     size="icon"
-                    className="bg-black text-white hover:bg-black hover:text-primary rounded-none fixed left-3 top-3 z-50 transition-colors duration-300"
+                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:bg-white hover:text-primary rounded-none fixed left-3 top-3 z-50 transition-colors duration-300`}
                     aria-label="Open chat history"
                 >
                     <PanelRight className="h-5 w-5" />
@@ -184,15 +186,15 @@ export const Sidebar = ({
             </SheetTrigger>
             <SheetContent
                 side="left"
-                className="w-[350px] p-0 bg-black border-r"
+                className={`w-[350px] p-0 ${theme === 'dark' ? 'bg-black' : 'bg-white'} border-r`}
             >
                 <SheetHeader className="p-4 border-b">
                     <div className="flex items-center justify-between">
-                        <SheetTitle className="text-lg font-semibold text-white">Chat History</SheetTitle>
+                        <SheetTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `}>Chat History</SheetTitle>
                         <Button
                             size="icon"
                             onClick={() => setIsOpen(false)}
-                            className="h-8 w-8 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300"
+                            className={`h-8 w-8 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-primary hover:${theme === 'dark' ? 'bg-black' : 'bg-white'}  transition-colors duration-300`}
                         >
                             <X className="h-5 w-5" />
                         </Button>
@@ -202,7 +204,7 @@ export const Sidebar = ({
                         placeholder="Search conversations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-3 py-2 bg-black border text-white text-sm focus:outline-none focus:border-primary"
+                        className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} border ${theme === 'dark' ? 'border-white' : 'border-black'} text-sm focus:outline-none focus:border-primary`}
                     />
                 </SheetHeader>
                 <ScrollArea className="h-[calc(100vh-120px)] p-4">
@@ -218,26 +220,27 @@ export const Sidebar = ({
                                     onClick={() => onSessionSelect(session.id)}
                                     className={cn(
                                         "p-3 border hover:border-primary cursor-pointer transition-all duration-300",
-                                        currentSessionId === session.id && "border-primary"
+                                        currentSessionId === session.id && "border-primary",
+                                        theme==='dark' ? 'border-white':'border-black' 
                                     )}
                                 >
                                     <div className="flex justify-between items-start gap-2">
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium text-white truncate">
+                                            <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-black'}  truncate`}>
                                                 {session.title}
                                             </h3>
-                                            <div className="flex items-center gap-2 mt-1 text-sm text-white">
+                                            <div className={`flex items-center gap-2 mt-1 text-sm ${theme === 'dark' ? 'text-white' : 'text-black'} `}>
                                                 <Clock className="h-3 w-3" />
                                                 <span>{formatDate(session.created_at)}</span>
                                             </div>
-                                            <div className="flex items-center gap-2 mt-1 text-sm text-white">
+                                            <div className={`flex items-center gap-2 mt-1 text-sm ${theme === 'dark' ? 'text-white' : 'text-black'} `}>
                                                 <MessageCircle className="h-3 w-3" />
                                                 {session.message_count} messages
                                             </div>
                                         </div>
                                         <Button
                                             size="icon"
-                                            className="h-8 w-8 rounded-none bg-black text-white hover:text-red-500 hover:bg-black transition-colors duration-300"
+                                            className={`h-8 w-8 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-red-500 hover:${theme === 'dark' ? 'bg-black' : 'bg-white'} transition-colors duration-300`}
                                             onClick={(e) => handleDeleteSession(session.id, e)}
                                             disabled={isLoading}
                                         >
@@ -246,12 +249,12 @@ export const Sidebar = ({
                                     </div>
                                     {session.files && session.files.length > 0 && (
                                         <>
-                                            <Separator className="my-2 bg-white" />
+                                            <Separator className={`my-2 ${theme === 'dark' ? 'bg-white' : 'bg-black'}`} />
                                             <div className="space-y-1">
                                                 {session.files.map((file) => (
                                                     <div
                                                         key={file.id}
-                                                        className="flex items-center justify-between text-sm text-white p-1"
+                                                        className={`flex items-center justify-between text-sm ${theme === 'dark' ? 'text-white' : 'text-black'}  p-1`}
                                                     >
                                                         <div className="flex items-center gap-2 truncate">
                                                             <FileText className="h-3 w-3 flex-shrink-0" />
@@ -259,7 +262,7 @@ export const Sidebar = ({
                                                         </div>
                                                         <Button
                                                             size="icon"
-                                                            className="h-5 w-5 rounded-none bg-black text-white hover:text-primary hover:bg-black transition-colors duration-300"
+                                                            className={`h-5 w-5 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-primary hover:bg-black transition-colors duration-300`}
                                                             onClick={(e) => handleDownloadFile(file.file_path, file.file_name, e)}
                                                         >
                                                             <Download className="h-5 w-5" />

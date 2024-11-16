@@ -1,10 +1,12 @@
+// app/layout.tsx
 import type { Metadata } from "next";
-import { Inter } from 'next/font/google'
+import { Inter } from 'next/font/google';
 import { twMerge } from "tailwind-merge";
 import { AuthProvider } from '@/Context/AuthContext';
+import { ThemeProvider } from '@/Context/ThemeContext';  // Import ThemeProvider
 import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: "CarbonCare",
@@ -18,10 +20,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={twMerge(inter.className, "bg-black", "text-white", "antialiased")}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className={twMerge(inter.className, "antialiased")}>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
