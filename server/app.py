@@ -1,3 +1,4 @@
+from functools import wraps
 import json
 import time
 from flask import Flask, request, jsonify
@@ -13,15 +14,17 @@ from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import datetime
+import jwt
 from flask_cors import CORS
 from supascript import push_sustainability_data
-
-
+from supabase_client import supabase
 
 load_dotenv('.env.local')
 url: str = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
-key: str = os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY")
-supabase: Client = create_client(url, key)
+service_role_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+jwt_secret: str = os.environ.get("SUPABASE_JWT_SECRET")
+
+supabase: Client = create_client(url, service_role_key)
 
 from sustainability_scoring import (
     LogisticsSustainabilityPipeline,
@@ -30,19 +33,10 @@ from sustainability_scoring import (
 )
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, resources={
-    r"/api/*": {
-        "origins": ["http://localhost:3000"],
-        "methods": ["OPTIONS", "POST", "GET"],
-        "allow_headers": ["Content-Type"]
-    }
-})
+CORS(app, supports_credentials=True, origins='http://localhost:3000')
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
 # Initialize components
@@ -83,19 +77,72 @@ Please provide:
     
     return response.choices[0].message.content
 
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return jsonify({}), 200
+
+        # Existing token validation code
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            parts = auth_header.split()
+            if len(parts) == 2 and parts[0] == 'Bearer':
+                token = parts[1]
+
+        if not token:
+            return jsonify({'error': 'Token is missing!'}), 401
+
+        try:
+            decoded = jwt.decode(
+                        token,
+                        jwt_secret,
+                        algorithms=["HS256"],
+                        audience="authenticated"
+                    )
+            user_id = decoded.get("sub")
+            if not user_id:
+                raise jwt.InvalidTokenError("User ID not found in token.")
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError as e:
+            return jsonify({'error': f'Invalid token: {str(e)}'}), 401
+
+        return f(user_id, *args, **kwargs)
+
+    return decorated
+
 import csv
+import math
+
+def replace_nan(obj):
+    """
+    Recursively replace NaN values in a nested structure with None.
+    """
+    if isinstance(obj, dict):
+        return {k: replace_nan(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_nan(item) for item in obj]
+    elif isinstance(obj, float):
+        return None if math.isnan(obj) else obj
+    else:
+        return obj
 
 @app.route('/api/v1/sustainability/upload', methods=['POST', 'OPTIONS'])
-def upload_csv():
+@token_required
+def upload_csv(user_id):
     if request.method == 'OPTIONS':
         return jsonify({}), 200
 
     try:
         if 'file' not in request.files:
+            app.logger.error('No file part in the request')
             return jsonify({'error': 'No file part in the request'}), 400
 
         file = request.files['file']
         if file.filename == '':
+            app.logger.error('No selected file')
             return jsonify({'error': 'No selected file'}), 400
 
         # Read CSV file into pandas DataFrame
@@ -113,48 +160,47 @@ def upload_csv():
 
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
-            return jsonify({
-                'error': f'Missing required columns: {", ".join(missing_columns)}'
-            }), 400
+            app.logger.error(f'Missing required columns: {missing_columns}')
+            return jsonify({'error': 'Missing required columns', 'missing_columns': missing_columns}), 400
 
         # Convert DataFrame to required format
         shipments = []
         sustainability_scores = []
 
-        for _, row in df.iterrows():
+        for index, row in df.iterrows():
             try:
+                # Parse packages field from JSON string to list
+                if isinstance(row["packages"], str):
+                    packages = json.loads(row["packages"])
+                elif isinstance(row["packages"], list):
+                    packages = row["packages"]
+                else:
+                    raise ValueError("Invalid format for packages field")
+
                 shipment = {
-                    "shipment_id": str(row["shipment_id"]),
-                    "timestamp": str(row["timestamp"]),
+                    "shipment_id": row["shipment_id"],
+                    "timestamp": row["timestamp"],
                     "origin": {
-                        "lat": float(row["origin_lat"]),
-                        "long": float(row["origin_long"])
+                        "lat": row["origin_lat"],
+                        "long": row["origin_long"]
                     },
                     "destination": {
-                        "lat": float(row["destination_lat"]),
-                        "long": float(row["destination_long"])
+                        "lat": row["destination_lat"],
+                        "long": row["destination_long"]
                     },
-                    "transport_mode": str(row["transport_mode"]),
-                    "packages": json.loads(row["packages"] if isinstance(row["packages"], str) else row["packages"])
+                    "transport_mode": row["transport_mode"],
+                    "packages": packages
                 }
                 shipments.append(shipment)
-                sustainability_scores.append(float(row["sustainability_score"]))
+                sustainability_scores.append(row["sustainability_score"])
             except (ValueError, json.JSONDecodeError) as e:
-                return jsonify({
-                    'error': f'Error processing row {row["shipment_id"]}: {str(e)}'
-                }), 400
+                app.logger.error(f"Row parsing error at index {index}: {str(e)}")
+                return jsonify({'error': 'Invalid data format in CSV', 'row_index': index}), 400
 
         data = {
-            "data": {
-                "shipments": shipments,
-                "sustainability_scores": sustainability_scores
-            }
+            "shipments": shipments,
+            "sustainability_scores": sustainability_scores
         }
-
-        # Save the uploaded data
-        json_file_path = os.path.join('/home/mayankch283/carboncare-logistics-agent/uploads', 'uploaded_data.json')
-        with open(json_file_path, 'w') as json_file:
-            json.dump(data, json_file)
 
         # Train the model
         train_result = train_model()
@@ -170,13 +216,21 @@ def upload_csv():
             if hasattr(response_data, 'get_json'):
                 response_data = response_data.get_json()
 
-            batch_analysis_result = perform_batch_analysis({"data": {"shipments": shipments}})
+            batch_analysis_result = perform_batch_analysis({"shipments": shipments})
             if isinstance(batch_analysis_result, tuple):
                 return batch_analysis_result  # Error response
             else:
-                # Push the produced JSON file to Supabase
+                # Prepare the response data
+                response_payload = {
+                    "batch_analysis": batch_analysis_result
+                }
+
+                # Replace NaN values with None
+                safe_response = replace_nan(response_payload)
+
+                # Push the entire JSON payload to Supabase
                 try:
-                    push_sustainability_data(json_file_path)
+                    push_sustainability_data(safe_response, user_id)
                 except Exception as e:
                     app.logger.error(f"Error pushing data to Supabase: {str(e)}")
                     return jsonify({
@@ -184,21 +238,23 @@ def upload_csv():
                         'details': str(e)
                     }), 500
 
-                return jsonify({
-                    "message": f"Successfully processed {len(shipments)} shipments",
-                    "training_results": response_data.get('training_results', {}) if isinstance(response_data, dict) else {},
-                    "batch_analysis": batch_analysis_result
-                }), 200
+                # Return the safe_response as JSON
+                return jsonify(safe_response), 200
         else:
             app.logger.error(f"Invalid train_result type: {type(train_result)}")
             return jsonify({'error': 'Invalid response from training model'}), 500
 
+    except KeyError as e:
+        # Specific handling for KeyError
+        app.logger.error(f"Upload error: {e}")
+        return jsonify({'error': f'Missing key: {str(e)}'}), 400
     except Exception as e:
-        app.logger.error(f"Upload error: {str(e)}")
-        return jsonify({
-            'error': str(e),
-            'error_type': type(e).__name__
-        }), 500
+        app.logger.error(f"Upload error: {e}")
+        response = jsonify({'error': str(e)})
+        response.status_code = 500
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        return response
 
 @app.route('/api/v1/sustainability/analyze', methods=['POST'])
 def analyze_shipment():
@@ -310,14 +366,11 @@ def batch_analyze():
     
 def perform_batch_analysis(data):
     """Perform batch analysis on shipments data"""
-    if 'shipments' not in data["data"]:
-        return jsonify({
-            'error': 'Missing shipments data',
-            'required_fields': ['shipments']
-        }), 400
+    if 'shipments' not in data:
+        raise ValueError("Input data must contain 'shipments' key.")
 
     results = []
-    for shipment in data["data"]['shipments']:
+    for shipment in data['shipments']:
         analysis = analyze_sustainability(pipeline, shipment, predictor)
         llm_insights = get_llm_analysis(
             analysis['metrics'],
@@ -331,7 +384,7 @@ def perform_batch_analysis(data):
         })
 
     return {
-        'timestamp': datetime.datetime.now().isoformat(),
+        'timestamp': datetime.datetime.utcnow().isoformat(),
         'num_shipments_analyzed': len(results),
         'results': results
     }
