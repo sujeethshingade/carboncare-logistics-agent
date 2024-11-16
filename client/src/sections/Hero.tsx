@@ -311,7 +311,7 @@ export const Hero: React.FC = () => {
             console.error('Error uploading file:', error);
             toast({
                 title: "Error",
-                description: error.message || "Failed to upload file",
+                description: (error instanceof Error ? error.message : "Failed to upload file"),
                 variant: "destructive"
             });
         } finally {
