@@ -335,12 +335,13 @@ export const Hero: React.FC = () => {
                 } catch (e) { }
                 throw new Error(errorMessage);
             }
-
+            
             const result = await response.json();
 
             toast({
                 title: "Success",
                 description: "File uploaded and processed successfully",
+                variant: "default"
             });
 
             const newMessages = [
@@ -505,11 +506,12 @@ export const Hero: React.FC = () => {
                         <input
                             type="file"
                             accept=".csv"
+                            className="hidden"
                             onChange={handleFileUpload}
                             ref={fileInputRef}
                             disabled={isLoading}
                         />
-                        {isLoading && <p>Uploading...</p>}
+                        {isLoading}
                     </div>
                 </>
             ) : (
