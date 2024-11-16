@@ -16,7 +16,8 @@ import {
     XAxis,
     YAxis,
     Legend,
-    AreaChart,
+    BarChart,
+    CartesianGrid,
     Area,
     ResponsiveContainer,
 } from 'recharts';
@@ -568,51 +569,47 @@ export const Dashboard: React.FC = () => {
                             {/* Sustainability Metrics */}
                             <ChartWrapper title="Sustainability Metrics">
                                 <ResponsiveContainer width="100%" height={400}>
-                                    <AreaChart
+                                    <BarChart
                                         data={chartData.sustainabilityMetrics}
-                                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                                     >
-                                        <XAxis dataKey="none" />
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="timestamp" />
                                         <YAxis domain={[0, 100]} />
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#000' }}
-                                            labelStyle={{ color: '#fff' }}
-                                            itemStyle={{ color: '#fff' }}
+                                            contentStyle={{
+                                                backgroundColor: theme === 'dark' ? '#000' : '#fff',
+                                                border: '1px solid #ccc'
+                                            }}
+                                            labelStyle={{ color: theme === 'dark' ? '#fff' : '#000' }}
+                                            itemStyle={{ color: theme === 'dark' ? '#fff' : '#000' }}
                                         />
                                         <Legend />
-                                        <Area
-                                            type="monotone"
+                                        <Bar
                                             dataKey="carbon_footprint"
-                                            stackId="1"
-                                            stroke="#8884d8"
-                                            fill="#8884d8"
                                             name="Carbon Footprint"
+                                            fill="#8884d8"
+                                            radius={[4, 4, 0, 0]}
                                         />
-                                        <Area
-                                            type="monotone"
+                                        <Bar
                                             dataKey="energy_efficiency"
-                                            stackId="1"
-                                            stroke="#82ca9d"
-                                            fill="#82ca9d"
                                             name="Energy Efficiency"
+                                            fill="#82ca9d"
+                                            radius={[4, 4, 0, 0]}
                                         />
-                                        <Area
-                                            type="monotone"
+                                        <Bar
                                             dataKey="resource_efficiency"
-                                            stackId="1"
-                                            stroke="#ffc658"
-                                            fill="#ffc658"
                                             name="Resource Efficiency"
+                                            fill="#ffc658"
+                                            radius={[4, 4, 0, 0]}
                                         />
-                                        <Area
-                                            type="monotone"
+                                        <Bar
                                             dataKey="waste_reduction"
-                                            stackId="1"
-                                            stroke="#ff8042"
-                                            fill="#ff8042"
                                             name="Waste Reduction"
+                                            fill="#ff8042"
+                                            radius={[4, 4, 0, 0]}
                                         />
-                                    </AreaChart>
+                                    </BarChart>
                                 </ResponsiveContainer>
                             </ChartWrapper>
                         </div>
