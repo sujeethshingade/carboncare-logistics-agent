@@ -17,8 +17,6 @@ import {
     YAxis,
     Legend,
     BarChart,
-    CartesianGrid,
-    Area,
     ResponsiveContainer,
 } from 'recharts';
 import { getLatestAnalytics, getAnalyticsHistory } from '@/lib/analytics-service';
@@ -524,7 +522,7 @@ export const Dashboard: React.FC = () => {
                                 <ResponsiveContainer width="100%" height={400}>
                                     <RadarChart data={chartData.radarData}>
                                         <PolarGrid />
-                                        <PolarAngleAxis dataKey="subject" />
+                                        <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12, fill: textColor }} />
                                         <PolarRadiusAxis angle={60} domain={[0, 100]} />
                                         <Radar
                                             name="Importance"
