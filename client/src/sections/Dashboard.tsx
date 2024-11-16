@@ -467,7 +467,7 @@ export const Dashboard: React.FC = () => {
                     )}
 
                     {selectedShipmentId && shipmentData && (
-                        
+
                         <div>
                             <ShippingKpiCards
                                 shipmentId={selectedShipmentId}
@@ -481,7 +481,7 @@ export const Dashboard: React.FC = () => {
                                 }
                                 materialType={
                                     (shipmentData.sustainability_analysis.processed_data.processed_data.packages as any[])[0].material_type
-                                  }
+                                }
                             />
                         </div>
                     )}
@@ -544,26 +544,42 @@ export const Dashboard: React.FC = () => {
 
                             {/* Sustainability Scores */}
                             <ChartWrapper title="Sustainability Scores">
-                                <ResponsiveContainer width="100%" height={400} bg-black>
-                                    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-                                        <Card style={{ width: '250px', backgroundColor: theme === 'dark' ? 'black' : 'white' }}>
-                                            <CardHeader>
-                                                <CardTitle style={{ color: textColor }}>Actual Score</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <ScoreDonutChart score={scoreData.actual} label="Actual Score" textColor={textColor} />
-                                            </CardContent>
-                                        </Card>
-                                        <Card style={{ width: '250px', backgroundColor: theme === 'dark' ? 'black' : 'white' }}>
-                                            <CardHeader>
-                                                <CardTitle style={{ color: textColor }}>Predicted Score</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <ScoreDonutChart score={scoreData.predicted} label="Predicted Score" textColor={textColor} />
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </ResponsiveContainer>
+                                <div className="mt-14 flex flex-col md:flex-row md:justify-between">
+                                    <Card
+                                        className="w-full md:w-[48%] border-none shadow-none"
+                                        style={{ backgroundColor: theme === 'dark' ? 'black' : 'white' }}
+                                    >
+                                        <CardHeader>
+                                            <CardTitle className="text-center" style={{ color: textColor }}>
+                                                Actual Score
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <ScoreDonutChart
+                                                score={scoreData.actual}
+                                                label="Actual Score"
+                                                textColor={textColor}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                    <Card
+                                        className="w-full md:w-[48%] border-none shadow-none mt-4 md:mt-0"
+                                        style={{ backgroundColor: theme === 'dark' ? 'black' : 'white' }}
+                                    >
+                                        <CardHeader>
+                                            <CardTitle className="text-center" style={{ color: textColor }}>
+                                                Predicted Score
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <ScoreDonutChart
+                                                score={scoreData.predicted}
+                                                label="Predicted Score"
+                                                textColor={textColor}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </ChartWrapper>
 
                             {/* Sustainability Metrics */}
