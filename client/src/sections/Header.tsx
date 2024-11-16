@@ -26,7 +26,7 @@ export const Header = () => {
                         alt="CarbonCare Logo"
                         width={50}
                         height={50}
-                        className="mr-2 mb-2"
+                        className="md:mr-2 mb-2"
                         priority
                     />
                     <h1 className={`text-xl md:text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
@@ -34,12 +34,9 @@ export const Header = () => {
                     </h1>
                 </div>
 
-                <nav className="flex items-center space-x-4 md:space-x-6 font-semibold">
-                    {/* Theme Toggle Component */}
+                <nav className="flex items-center space-x-2 md:space-x-6 font-semibold">
                     <ThemeToggle />
-
-                    {/* Authentication Links */}
-                    <ul className="flex space-x-4">
+                    <ul className="flex space-x-2 md:space-x-4">
                         {!user ? (
                             <>
                                 <li>
