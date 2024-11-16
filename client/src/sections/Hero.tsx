@@ -25,7 +25,7 @@ export const Hero: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    
+    const [accessToken, setAccessToken] = useState<string | null>(null);
 
     const sustainabilityTopics: ChatTopic[] = [
         {
@@ -58,6 +58,30 @@ export const Hero: React.FC = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    useEffect(() => {
+        const fetchSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                setAccessToken(session.access_token);
+            }
+        };
+
+        fetchSession();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                setAccessToken(session.access_token);
+                // Optionally handle session changes
+            } else {
+                setAccessToken(null);
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -105,13 +129,21 @@ export const Hero: React.FC = () => {
                 .select()
                 .single();
 
-            if (sessionError) throw sessionError;
+            if (sessionError) {
+                throw sessionError;
+            }
 
-            setCurrentSessionId(session.id);
-            setMessages([]);
-            setError(null);
+            if (session && session.id) {
+                setCurrentSessionId(session.id);
+                setMessages([]);
+                setError(null);
+                console.log(`New session created with ID: ${session.id}`);
+            } else {
+                throw new Error('Failed to create a new session.');
+            }
         } catch (err) {
             console.error('Error creating session:', err);
+            setError('Failed to create a new session.');
         } finally {
             setIsLoading(false);
         }
@@ -250,6 +282,7 @@ export const Hero: React.FC = () => {
         }
     };
 
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -264,50 +297,66 @@ export const Hero: React.FC = () => {
             return;
         }
 
+        // Check if we have an access token
+        if (!accessToken) {
+            toast({
+                title: "Authentication Error",
+                description: "You must be logged in to upload files",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        // Ensure currentSessionId is set
+        if (!currentSessionId) {
+            await createNewSession();
+        }
+
         setIsLoading(true);
         const formData = new FormData();
         formData.append('file', file);
 
         try {
-            const response = await fetch('http://localhost:5000/api/v1/sustainability/upload', {  // Update URL to match your Flask server
+            const response = await fetch('http://localhost:5000/api/v1/sustainability/upload', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                },
                 body: formData,
-                // Don't set Content-Type header - let browser set it with boundary for FormData
+                credentials: 'include',
             });
 
-            // Check if response is JSON
-            const contentType = response.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
-                throw new Error(`Server returned unexpected content type: ${contentType}`);
+            if (!response.ok) {
+                let errorMessage = 'Failed to upload file';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) { }
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Upload failed');
-            }
 
             toast({
                 title: "Success",
                 description: "File uploaded and processed successfully",
             });
 
-            // Add message to chat
             const newMessages = [
                 {
                     text: `Uploaded file: ${file.name}`,
                     type: 'user' as const
                 },
                 {
-                    text: `File processed successfully. ${result.message}`,
+                    text: `File processed successfully.`,
                     type: 'agent' as const
                 }
             ];
             setMessages(prev => [...prev, ...newMessages]);
             await saveMessagesToDatabase(newMessages);
 
-        } catch (error) {
-            console.error('Error uploading file:', error);
+        } catch (error: any) {
+            console.error('Upload error:', error);
             toast({
                 title: "Error",
                 description: error.message || "Failed to upload file",
@@ -454,11 +503,12 @@ export const Hero: React.FC = () => {
                         </Card>
                         <input
                             type="file"
-                            ref={fileInputRef}
-                            className="hidden"
                             accept=".csv"
                             onChange={handleFileUpload}
+                            ref={fileInputRef}
+                            disabled={isLoading}
                         />
+                        {isLoading && <p>Uploading...</p>}
                     </div>
                 </>
             ) : (
