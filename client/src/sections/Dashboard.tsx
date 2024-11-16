@@ -34,7 +34,7 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
-  } from '@/components/ui/card';
+} from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LayoutDashboard, X, Truck, Package, AlertTriangle, Boxes } from 'lucide-react';
 
@@ -89,7 +89,7 @@ const KpiCard: React.FC<KpiCardPropsType> = ({
     value,
     icon,
 }) => {
-    const { theme }=useTheme();
+    const { theme } = useTheme();
     return (
         <Card className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  rounded-none`}>
             <CardContent className="p-6">
@@ -183,7 +183,7 @@ const ShipmentSelector: React.FC<{
     selectedId: string | null;
     onSelect: (id: string) => void;
 }> = ({ shipments, selectedId, onSelect }) => {
-    const { theme }=useTheme();
+    const { theme } = useTheme();
     return (
         <select
             value={selectedId || ''}
@@ -202,14 +202,16 @@ const ShipmentSelector: React.FC<{
 const ChartWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({
     title,
     children,
-    
-}) =>{const { theme }=useTheme();
-    return(
-    <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  p-4 border`}>
-        <h4 className={`${theme === 'dark' ? 'text-white' : 'text-black'}  mb-4 text-lg font-medium`}>{title}</h4>
-        <div className="flex justify-center items-center">{children}</div>
-    </div>
-)};
+
+}) => {
+    const { theme } = useTheme();
+    return (
+        <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  p-4 border`}>
+            <h4 className={`${theme === 'dark' ? 'text-white' : 'text-black'}  mb-4 text-lg font-medium`}>{title}</h4>
+            <div className="flex justify-center items-center">{children}</div>
+        </div>
+    )
+};
 
 export const Dashboard: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -261,78 +263,78 @@ export const Dashboard: React.FC = () => {
         score: number;
         label: string;
         textColor?: string;
-      }
+    }
     const ScoreDonutChart: React.FC<{ score: number; label: string; textColor?: string }> = ({ score, label, textColor }) => {
-        const [value, setValue] = useState<number>(0);
+        const [value, setValue] = useState(0);
         const percentage = Math.min(Math.max(score, 0), 100);
-        const intervalTime = 20; // Interval time in milliseconds
-        const duration = 2000; // Total animation duration in milliseconds
+        const intervalTime = 20;
+        const duration = 2000;
         const increment = percentage / (duration / intervalTime);
-      
+
         useEffect(() => {
-          let startValue = 0;
-          const timer = setInterval(() => {
-            startValue += increment;
-            if (startValue >= percentage) {
-              startValue = percentage;
-              clearInterval(timer);
-            }
-            setValue(startValue);
-          }, intervalTime);
-      
-          return () => clearInterval(timer);
+            let startValue = 0;
+            const timer = setInterval(() => {
+                startValue += increment;
+                if (startValue >= percentage) {
+                    startValue = percentage;
+                    clearInterval(timer);
+                }
+                setValue(startValue);
+            }, intervalTime);
+
+            return () => clearInterval(timer);
         }, [percentage, increment]);
-      
+
         const gradientId = `gradient-${label.replace(/\s+/g, '-')}`;
-      
+
         return (
-            
-          <div
-            className="score-donut-chart" // Or styles['score-donut-chart'] if using CSS modules
-            
-          >
-            {/* Define the gradient */}
-            <svg style={{ height: 0 }}>
-              <defs>
-                <linearGradient id={gradientId}>
-                  <stop offset="0%" stopColor="#ff4e50" />
-                  <stop offset="100%" stopColor="#1fa2ff" />
-                </linearGradient>
-              </defs>
-            </svg>
-            {/* Progress Bar */}
-            <CircularProgressbar
-              value={value}
-              styles={buildStyles({
-                rotation: 0.75,
-                strokeLinecap: 'round',
-                trailColor: '#eee',
-                pathColor: `url(#${gradientId})`,
-              })}
-            />
-            {/* Centered Text */}
-            <div
-              style={{
-                position: 'absolute',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: textColor,
-              }}
-            >
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-                {`${Math.round(value)}%`}
-              </div>
-              <div style={{ fontSize: '16px', marginTop: '4px' }}>{label}</div>
+
+            <div className="relative w-48 h-48">
+                <svg style={{ height: 0 }}>
+                    <defs>
+                        <linearGradient id={gradientId}>
+                            <stop offset="0%" stopColor="#ff4e50" />
+                            <stop offset="100%" stopColor="#1fa2ff" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                {/* Define the gradient */}
+                <svg style={{ height: 0 }}>
+                    <defs>
+                        <linearGradient id={gradientId}>
+                            <stop offset="0%" stopColor="#ff4e50" />
+                            <stop offset="100%" stopColor="#1fa2ff" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                {/* Progress Bar */}
+                <CircularProgressbar
+                    value={value}
+                    styles={buildStyles({
+                        rotation: 0.75,
+                        strokeLinecap: 'round',
+                        trailColor: '#eee',
+                        pathColor: `url(#${gradientId})`,
+                        textColor: textColor
+                    })}
+                />
+                {/* Centered Text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <div className="text-2xl font-bold" style={{ color: textColor }}>
+                        {Math.round(value)}%
+                    </div>
+                    <div className="text-sm mt-1" style={{ color: textColor }}>
+                        {label}
+                    </div>
+                </div>
             </div>
-          </div>
         );
-      };
-const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
-    name: string;
-    actual: number;
-    predicted: number;
-  }>>([]);
+    };
+    const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
+        name: string;
+        actual: number;
+        predicted: number;
+    }>>([]);
     const processChartData = (
         latestAnalytics: SustainabilityAnalytics | null,
         historyAnalytics: SustainabilityAnalytics[],
@@ -361,7 +363,7 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
                     .split('_')
                     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(' '),
-                value: Number((Number(value)*100).toFixed(2)),
+                value: Number((Number(value) * 100).toFixed(2)),
             }));
 
         const featureImportance =
@@ -386,8 +388,8 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
             },
         ];
         setSustainabilityScores(scores);
-        
-        
+
+
 
         const sustainabilityMetrics = results.map((result) => ({
             timestamp: new Date(result?.processed_data?.timestamp || Date.now()).toLocaleDateString(),
@@ -419,16 +421,16 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
     );
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-    const { theme }=useTheme();
+    const { theme } = useTheme();
     const scoreData = sustainabilityScores[0];
     const textColor = theme === 'dark' ? 'white' : 'black';
     return (
-        
+
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
                 <Button
                     size="icon"
-                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}  hover:bg-black hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300`}
+                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}  hover:${theme === 'dark' ? 'bg-black' : 'bg-white'} hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300`}
                     aria-label="Open Dashboard"
                 >
                     <LayoutDashboard className="h-5 w-5" />
@@ -542,76 +544,76 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
                             {/* Sustainability Scores */}
                             <ChartWrapper title="Sustainability Scores">
                                 <ResponsiveContainer width="100%" height={400} bg-black>
-                                <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-                                <Card style={{ width: '200px', backgroundColor: theme === 'dark' ? 'black' : 'white'  }}>
-  <CardHeader>
-    <CardTitle style={{ color: textColor }}>Actual Score</CardTitle>
-  </CardHeader>
-  <CardContent>
-    <ScoreDonutChart score={scoreData.actual} label="Actual Score" textColor={textColor}/>
-  </CardContent>
-</Card>
-        <Card style={{ width: '200px',backgroundColor: theme === 'dark' ? 'black' : 'white' }}>
-          <CardHeader>
-            <CardTitle style={{ color: textColor }}>Predicted Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScoreDonutChart score={scoreData.predicted} label="Predicted Score" textColor={textColor} />
-          </CardContent>
-          </Card>
-      </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                                        <Card style={{ width: '250px', backgroundColor: theme === 'dark' ? 'black' : 'white' }}>
+                                            <CardHeader>
+                                                <CardTitle style={{ color: textColor }}>Actual Score</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ScoreDonutChart score={scoreData.actual} label="Actual Score" textColor={textColor} />
+                                            </CardContent>
+                                        </Card>
+                                        <Card style={{ width: '250px', backgroundColor: theme === 'dark' ? 'black' : 'white' }}>
+                                            <CardHeader>
+                                                <CardTitle style={{ color: textColor }}>Predicted Score</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ScoreDonutChart score={scoreData.predicted} label="Predicted Score" textColor={textColor} />
+                                            </CardContent>
+                                        </Card>
+                                    </div>
                                 </ResponsiveContainer>
                             </ChartWrapper>
 
                             {/* Sustainability Metrics */}
                             <ChartWrapper title="Sustainability Metrics">
-                                    <ResponsiveContainer width="100%" height={400}>
-                                        <AreaChart
-                                            data={chartData.sustainabilityMetrics}
-                                            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                                        >
-                                            <XAxis dataKey="none" />
-                                            <YAxis domain={[0, 100]} />
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: '#000' }}
-                                                labelStyle={{ color: '#fff' }}
-                                                itemStyle={{ color: '#fff' }}
-                                            />
-                                            <Legend />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="carbon_footprint"
-                                                stackId="1"
-                                                stroke="#8884d8"
-                                                fill="#8884d8"
-                                                name="Carbon Footprint"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="energy_efficiency"
-                                                stackId="1"
-                                                stroke="#82ca9d"
-                                                fill="#82ca9d"
-                                                name="Energy Efficiency"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="resource_efficiency"
-                                                stackId="1"
-                                                stroke="#ffc658"
-                                                fill="#ffc658"
-                                                name="Resource Efficiency"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="waste_reduction"
-                                                stackId="1"
-                                                stroke="#ff8042"
-                                                fill="#ff8042"
-                                                name="Waste Reduction"
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <AreaChart
+                                        data={chartData.sustainabilityMetrics}
+                                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                    >
+                                        <XAxis dataKey="none" />
+                                        <YAxis domain={[0, 100]} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#000' }}
+                                            labelStyle={{ color: '#fff' }}
+                                            itemStyle={{ color: '#fff' }}
+                                        />
+                                        <Legend />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="carbon_footprint"
+                                            stackId="1"
+                                            stroke="#8884d8"
+                                            fill="#8884d8"
+                                            name="Carbon Footprint"
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="energy_efficiency"
+                                            stackId="1"
+                                            stroke="#82ca9d"
+                                            fill="#82ca9d"
+                                            name="Energy Efficiency"
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="resource_efficiency"
+                                            stackId="1"
+                                            stroke="#ffc658"
+                                            fill="#ffc658"
+                                            name="Resource Efficiency"
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="waste_reduction"
+                                            stackId="1"
+                                            stroke="#ff8042"
+                                            fill="#ff8042"
+                                            name="Waste Reduction"
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
                             </ChartWrapper>
                         </div>
                     )}
