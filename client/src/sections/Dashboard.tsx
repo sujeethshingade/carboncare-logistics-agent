@@ -53,7 +53,7 @@ interface Prediction {
 
 interface ProcessedData {
     transport_mode: string;
-    [key: string]: string | number;
+    [key: string]: string | number | any[];
 }
 
 interface SustainabilityAnalysis {
@@ -428,7 +428,7 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
             <SheetTrigger asChild>
                 <Button
                     size="icon"
-                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}  hover:bg-black hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300`}
+                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}  hover:${theme === 'dark' ? 'bg-black' : 'bg-white'} hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300`}
                     aria-label="Open Dashboard"
                 >
                     <LayoutDashboard className="h-5 w-5" />
@@ -464,6 +464,7 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
                     )}
 
                     {selectedShipmentId && shipmentData && (
+                        
                         <div>
                             <ShippingKpiCards
                                 shipmentId={selectedShipmentId}
@@ -476,9 +477,8 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
                                     0
                                 }
                                 materialType={
-                                    String(shipmentData.sustainability_analysis.processed_data.processed_data
-                                        .material_type || 'N/A')
-                                }
+                                    (shipmentData.sustainability_analysis.processed_data.processed_data.packages as any[])[0].material_type
+                                  }
                             />
                         </div>
                     )}
@@ -526,9 +526,9 @@ const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
                                         <Radar
                                             name="Importance"
                                             dataKey="importance"
-                                            stroke="#8884d8"
-                                            fill="#8884d8"
-                                            fillOpacity={0.6}
+                                            stroke="#4caf50"
+                                            fill="#4caf50"
+                                            fillOpacity={0.8}
                                         />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: '#000' }}
