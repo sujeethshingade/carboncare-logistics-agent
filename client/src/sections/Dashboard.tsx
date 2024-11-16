@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LayoutDashboard, X, Truck, Package, AlertTriangle, Boxes } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface Metrics {
     [key: string]: number | string;
@@ -68,6 +69,7 @@ interface SustainabilityAnalysis {
 interface Result {
     processed_data: any;
     shipment_id: string;
+    llm_insights: string;
     sustainability_analysis: SustainabilityAnalysis;
 }
 
@@ -215,20 +217,19 @@ const ChartWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({
 export const Dashboard: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [latestData, setLatestData] = useState<SustainabilityAnalytics | null>(
-        null
-    );
+        null);
     const [historyData, setHistoryData] = useState<SustainabilityAnalytics[]>(
-        []
-    );
+        []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartData | null>(null);
 
     const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(
-        null
-    );
+        null);
     const [availableShipments, setAvailableShipments] = useState<string[]>([]);
     const [score, setScore] = useState<number>(0);
+    const selectedShipmentData = latestData?.results?.find(
+        (result) => result.shipment_id === selectedShipmentId);
 
     const fetchData = async () => {
         setLoading(true);
@@ -242,7 +243,6 @@ export const Dashboard: React.FC = () => {
                 setAvailableShipments(shipmentIds);
                 setSelectedShipmentId(shipmentIds[0]);
             }
-
             const history = await getAnalyticsHistory();
             setHistoryData(history);
         } catch (err) {
@@ -287,7 +287,6 @@ export const Dashboard: React.FC = () => {
         const gradientId = `gradient-${label.replace(/\s+/g, '-')}`;
 
         return (
-
             <div className="relative w-48 h-48">
                 <svg style={{ height: 0 }}>
                     <defs>
@@ -297,7 +296,6 @@ export const Dashboard: React.FC = () => {
                         </linearGradient>
                     </defs>
                 </svg>
-                {/* Define the gradient */}
                 <svg style={{ height: 0 }}>
                     <defs>
                         <linearGradient id={gradientId}>
@@ -306,7 +304,6 @@ export const Dashboard: React.FC = () => {
                         </linearGradient>
                     </defs>
                 </svg>
-                {/* Progress Bar */}
                 <CircularProgressbar
                     value={value}
                     styles={buildStyles({
@@ -317,7 +314,6 @@ export const Dashboard: React.FC = () => {
                         textColor: textColor
                     })}
                 />
-                {/* Centered Text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                     <div className="text-2xl font-bold" style={{ color: textColor }}>
                         {Math.round(value)}%
@@ -387,8 +383,6 @@ export const Dashboard: React.FC = () => {
             },
         ];
         setSustainabilityScores(scores);
-
-
 
         const sustainabilityMetrics = results.map((result) => ({
             timestamp: new Date(result?.processed_data?.timestamp || Date.now()).toLocaleDateString(),
@@ -462,6 +456,37 @@ export const Dashboard: React.FC = () => {
 
                     {loading && (
                         <div className={`text-center ${theme === 'dark' ? 'text-white' : 'text-black'}  p-6`}>Loading...</div>
+                    )}
+
+                    {shipmentData?.llm_insights && (
+                        <Card
+                            className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'
+                                } mb-4 mt-8 border-none`}
+                        >
+
+                            <ScrollArea className="h-[300px] w-full rounded-none border p-4">
+                                <h2 className="text-xl font-semibold mb-8">Sustainability Insights</h2>
+                                <div className="pr-4">
+                                    <ReactMarkdown
+                                        className={`
+                        prose
+                        ${theme === 'dark' ? 'prose-invert' : ''}
+                        max-w-none
+                        prose-headings:font-semibold
+                        prose-h1:text-xl
+                        prose-h2:text-lg
+                        prose-h3:text-md
+                        prose-p:text-sm
+                        prose-li:text-sm
+                        prose-strong:text-primary
+                        space-y-4
+                    `}
+                                    >
+                                        {shipmentData.llm_insights}
+                                    </ReactMarkdown>
+                                </div>
+                            </ScrollArea>
+                        </Card>
                     )}
 
                     {selectedShipmentId && shipmentData && (
