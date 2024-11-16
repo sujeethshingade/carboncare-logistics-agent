@@ -444,7 +444,7 @@ export const Dashboard: React.FC = () => {
                         <Button
                             size="icon"
                             onClick={() => setIsOpen(false)}
-                            className={`h-8 w-8 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-primary hover:bg-black transition-colors duration-300`}
+                            className={`h-8 w-8 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-primary hover:${theme === 'dark' ? 'bg-black' : 'bg-white'} transition-colors duration-300`}
                         >
                             <X className="h-5 w-5" />
                         </Button>
@@ -589,7 +589,6 @@ export const Dashboard: React.FC = () => {
                                         data={chartData.sustainabilityMetrics}
                                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                                     >
-                                        <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="timestamp" />
                                         <YAxis domain={[0, 100]} />
                                         <Tooltip
