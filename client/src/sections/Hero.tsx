@@ -8,19 +8,21 @@ import { Sidebar } from '@/sections/Sidebar';
 import { Dashboard } from '@/sections/Dashboard'
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/Context/ThemeContext';
+import { toast } from '@/components/ui/use-toast';
 
 type ChatTopic = {
     title: string;
     prompt: string;
 };
 
-export const Hero = () => {
+export const Hero: React.FC = () => {
     const [messages, setMessages] = useState<{ text: string; type: 'user' | 'agent' }[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [user, setUser] = useState<any>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
@@ -243,32 +245,80 @@ export const Hero = () => {
         }
     };
 
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) {
+            setSelectedFile(event.target.files[0]);
+        }
+    };
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !currentSessionId || !user) return;
+        if (!file) return;
+
+        // Check if file is CSV
+        if (!file.name.endsWith('.csv')) {
+            toast({
+                title: "Invalid file type",
+                description: "Please upload a CSV file",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        const formData = new FormData();
+        formData.append('file', file);
 
         try {
-            setIsLoading(true);
-            const filePath = `${user.id}/${currentSessionId}/${file.name}`;
-            const { error: uploadError } = await supabase.storage
-                .from('chat-files')
-                .upload(filePath, file);
+            const response = await fetch('http://localhost:5000/api/v1/sustainability/upload', {  // Update URL to match your Flask server
+                method: 'POST',
+                body: formData,
+                // Don't set Content-Type header - let browser set it with boundary for FormData
+            });
 
-            if (uploadError) throw uploadError;
+            // Check if response is JSON
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error(`Server returned unexpected content type: ${contentType}`);
+            }
 
-            const { error: fileError } = await supabase
-                .from('session_files')
-                .insert({
-                    session_id: currentSessionId,
-                    file_name: file.name,
-                    file_path: filePath,
-                    file_type: file.type
-                });
+            const result = await response.json();
 
-        } catch (err) {
-            console.error('Error uploading file:', err);
+            if (!response.ok) {
+                throw new Error(result.error || 'Upload failed');
+            }
+
+            toast({
+                title: "Success",
+                description: "File uploaded and processed successfully",
+            });
+
+            // Add message to chat
+            const newMessages = [
+                {
+                    text: `Uploaded file: ${file.name}`,
+                    type: 'user' as const
+                },
+                {
+                    text: `File processed successfully. ${result.message}`,
+                    type: 'agent' as const
+                }
+            ];
+            setMessages(prev => [...prev, ...newMessages]);
+            await saveMessagesToDatabase(newMessages);
+
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to upload file",
+                variant: "destructive"
+            });
         } finally {
             setIsLoading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -407,6 +457,7 @@ export const Hero = () => {
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
+                            accept=".csv"
                             onChange={handleFileUpload}
                         />
                     </div>
