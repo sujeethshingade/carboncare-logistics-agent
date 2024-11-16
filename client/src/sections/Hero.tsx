@@ -26,7 +26,7 @@ export const Hero: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const [accessToken, setAccessToken] = useState<string | null>(null);const { theme }=useTheme();
+    const [accessToken, setAccessToken] = useState<string | null>(null); const { theme } = useTheme();
 
     const sustainabilityTopics: ChatTopic[] = [
         {
@@ -238,6 +238,7 @@ export const Hero: React.FC = () => {
         }
     };
 
+    // In Hero.tsx, update the handleSendMessage function:
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || isLoading) return;
 
@@ -257,21 +258,51 @@ export const Hero: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const newMessages = [
-                { text: inputMessage, type: 'user' as const },
-                { text: 'Error generating response.', type: 'agent' as const }
-            ];
+            // Add the user message immediately for better UX
+            const userMessage = { text: inputMessage, type: 'user' as const };
+            setMessages(prev => [...prev, userMessage]);
 
-            setMessages(prev => [...prev, ...newMessages]);
+            // Save user message to database
+            await saveMessagesToDatabase([userMessage]);
+
+            // Clear input right after sending
             setInputMessage('');
 
-            await saveMessagesToDatabase(newMessages);
+            // Send the message to the backend
+            const response = await fetch('http://localhost:5000/api/v1/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: inputMessage,
+                    session_id: currentSessionId
+                }),
+            });
 
-            if (messages.length === 0) {
-                await updateSessionTitle(inputMessage.slice(0, 50));
+            if (!response.ok) {
+                throw new Error('Failed to get response from server');
             }
+
+            const data = await response.json();
+
+            // Add the agent's response to the messages
+            const agentMessage = { text: data.reply, type: 'agent' as const };
+            setMessages(prev => [...prev, agentMessage]);
+
+            // Save agent message to database
+            await saveMessagesToDatabase([agentMessage]);
+
         } catch (err) {
             console.error('Error handling message:', err);
+            // Add error message to chat
+            const errorMessage = {
+                text: "Sorry, I encountered an error processing your message. Please try again.",
+                type: 'agent' as const
+            };
+            setMessages(prev => [...prev, errorMessage]);
+            await saveMessagesToDatabase([errorMessage]);
         } finally {
             setIsLoading(false);
         }

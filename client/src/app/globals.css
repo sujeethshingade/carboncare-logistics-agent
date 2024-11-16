@@ -133,3 +133,9 @@ body {
 .theme-switch-input:checked + .theme-switch-slider:before {
   transform: translateX(26px);
 }
+
+/* In your CSS file or inline styles */
+.chart-container {
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+}

@@ -77,6 +77,47 @@ Please provide:
     
     return response.choices[0].message.content
 
+from flask import request, jsonify
+
+@app.route('/api/v1/chat', methods=['POST', 'GET'])
+def chat_with_llm():
+    try:
+        data = request.get_json()
+        
+        if not data or 'content' not in data:
+            return jsonify({'error': 'No message content provided'}), 400
+            
+        user_message = data['content']
+        session_id = data.get('session_id')
+        
+        prompt = """ You are a sustainability and logistics expert AI assistant. 
+                 Focus on providing accurate, actionable insights about environmental impact, carbon footprint, 
+                 and sustainable practices. Use concrete metrics and specific examples when possible."""
+
+        response = client.chat.completions.create(
+            model="meta-llama/Llama-3.2-1B-Instruct",
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.7,
+            max_tokens=1024,
+        )
+
+        llm_reply = response.choices[0].message.content
+
+        return jsonify({
+            'reply': llm_reply,
+            'session_id': session_id
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Chat error: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({
+            'error': 'Internal server error',
+            'details': str(e)
+        }), 500
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):

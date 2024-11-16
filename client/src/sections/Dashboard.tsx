@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/Context/ThemeContext';
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
 import {
     PieChart,
     Pie,
@@ -10,12 +12,12 @@ import {
     PolarAngleAxis,
     PolarRadiusAxis,
     Radar,
-    BarChart,
     Bar,
     XAxis,
     YAxis,
     Legend,
-    AreaChart,
+    BarChart,
+    CartesianGrid,
     Area,
     ResponsiveContainer,
 } from 'recharts';
@@ -28,7 +30,12 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LayoutDashboard, X, Truck, Package, AlertTriangle, Boxes } from 'lucide-react';
 
@@ -47,7 +54,7 @@ interface Prediction {
 
 interface ProcessedData {
     transport_mode: string;
-    [key: string]: string | number;
+    [key: string]: string | number | any[];
 }
 
 interface SustainabilityAnalysis {
@@ -83,7 +90,7 @@ const KpiCard: React.FC<KpiCardPropsType> = ({
     value,
     icon,
 }) => {
-    const { theme }=useTheme();
+    const { theme } = useTheme();
     return (
         <Card className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  rounded-none`}>
             <CardContent className="p-6">
@@ -177,7 +184,7 @@ const ShipmentSelector: React.FC<{
     selectedId: string | null;
     onSelect: (id: string) => void;
 }> = ({ shipments, selectedId, onSelect }) => {
-    const { theme }=useTheme();
+    const { theme } = useTheme();
     return (
         <select
             value={selectedId || ''}
@@ -196,14 +203,16 @@ const ShipmentSelector: React.FC<{
 const ChartWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({
     title,
     children,
-    
-}) =>{const { theme }=useTheme();
-    return(
-    <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  p-4 border`}>
-        <h4 className={`${theme === 'dark' ? 'text-white' : 'text-black'}  mb-4 text-lg font-medium`}>{title}</h4>
-        <div className="flex justify-center items-center">{children}</div>
-    </div>
-)};
+
+}) => {
+    const { theme } = useTheme();
+    return (
+        <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'}  p-4 border`}>
+            <h4 className={`${theme === 'dark' ? 'text-white' : 'text-black'}  mb-4 text-lg font-medium`}>{title}</h4>
+            <div className="flex justify-center items-center">{children}</div>
+        </div>
+    )
+};
 
 export const Dashboard: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -221,6 +230,7 @@ export const Dashboard: React.FC = () => {
         null
     );
     const [availableShipments, setAvailableShipments] = useState<string[]>([]);
+    const [score, setScore] = useState<number>(0);
 
     const fetchData = async () => {
         setLoading(true);
@@ -250,7 +260,82 @@ export const Dashboard: React.FC = () => {
             fetchData();
         }
     }, [isOpen]);
+    interface ScoreDonutChartProps {
+        score: number;
+        label: string;
+        textColor?: string;
+    }
+    const ScoreDonutChart: React.FC<{ score: number; label: string; textColor?: string }> = ({ score, label, textColor }) => {
+        const [value, setValue] = useState(0);
+        const percentage = Math.min(Math.max(score, 0), 100);
+        const intervalTime = 20;
+        const duration = 2000;
+        const increment = percentage / (duration / intervalTime);
 
+        useEffect(() => {
+            let startValue = 0;
+            const timer = setInterval(() => {
+                startValue += increment;
+                if (startValue >= percentage) {
+                    startValue = percentage;
+                    clearInterval(timer);
+                }
+                setValue(startValue);
+            }, intervalTime);
+
+            return () => clearInterval(timer);
+        }, [percentage, increment]);
+
+        const gradientId = `gradient-${label.replace(/\s+/g, '-')}`;
+
+        return (
+
+            <div className="relative w-48 h-48">
+                <svg style={{ height: 0 }}>
+                    <defs>
+                        <linearGradient id={gradientId}>
+                            <stop offset="0%" stopColor="#ff4e50" />
+                            <stop offset="100%" stopColor="#1fa2ff" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                {/* Define the gradient */}
+                <svg style={{ height: 0 }}>
+                    <defs>
+                        <linearGradient id={gradientId}>
+                            <stop offset="0%" stopColor="#ff4e50" />
+                            <stop offset="100%" stopColor="#1fa2ff" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                {/* Progress Bar */}
+                <CircularProgressbar
+                    value={value}
+                    styles={buildStyles({
+                        rotation: 0.75,
+                        strokeLinecap: 'round',
+                        trailColor: '#eee',
+                        pathColor: `url(#${gradientId})`,
+                        textColor: textColor
+                    })}
+                />
+                {/* Centered Text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <div className="text-2xl font-bold" style={{ color: textColor }}>
+                        {Math.round(value)}%
+                    </div>
+                    <div className="text-sm mt-1" style={{ color: textColor }}>
+                        {label}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+    const [sustainabilityScores, setSustainabilityScores] = useState<Array<{
+        name: string;
+        actual: number;
+        predicted: number;
+    }>>([]);
     const processChartData = (
         latestAnalytics: SustainabilityAnalytics | null,
         historyAnalytics: SustainabilityAnalytics[],
@@ -266,7 +351,7 @@ export const Dashboard: React.FC = () => {
         );
 
         if (!shipmentData) return null;
-        const metrics = shipmentData.sustainability_analysis.metrics;
+        const metrics = shipmentData.sustainability_analysis.predictions.feature_importances;
 
         const pieData = Object.entries(metrics)
             .filter(
@@ -279,20 +364,20 @@ export const Dashboard: React.FC = () => {
                     .split('_')
                     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(' '),
-                value: Number(Number(value).toFixed(2)),
+                value: Number((Number(value) * 100).toFixed(2)),
             }));
 
         const featureImportance =
-            shipmentData.sustainability_analysis.predictions.feature_importances;
+            shipmentData.sustainability_analysis.metrics;
         const radarData = Object.entries(featureImportance).map(([key, value]) => ({
             subject: key
                 .split('_')
                 .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' '),
-            importance: Number((value * 100).toFixed(2)),
+            importance: Number((Number(value)).toFixed(2)),
         }));
 
-        const sustainabilityScores = [
+        const scores = [
             {
                 name: `Shipment ${shipmentId}`,
                 actual: Number(
@@ -303,6 +388,9 @@ export const Dashboard: React.FC = () => {
                 ),
             },
         ];
+        setSustainabilityScores(scores);
+
+
 
         const sustainabilityMetrics = results.map((result) => ({
             timestamp: new Date(result?.processed_data?.timestamp || Date.now()).toLocaleDateString(),
@@ -334,14 +422,16 @@ export const Dashboard: React.FC = () => {
     );
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-    const { theme }=useTheme();
-
+    const { theme } = useTheme();
+    const scoreData = sustainabilityScores[0];
+    const textColor = theme === 'dark' ? 'white' : 'black';
     return (
+
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
                 <Button
                     size="icon"
-                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}  hover:bg-black hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300`}
+                    className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}  hover:${theme === 'dark' ? 'bg-black' : 'bg-white'} hover:text-primary rounded-none fixed right-3 top-3 z-50 transition-colors duration-300`}
                     aria-label="Open Dashboard"
                 >
                     <LayoutDashboard className="h-5 w-5" />
@@ -377,6 +467,7 @@ export const Dashboard: React.FC = () => {
                     )}
 
                     {selectedShipmentId && shipmentData && (
+                        
                         <div>
                             <ShippingKpiCards
                                 shipmentId={selectedShipmentId}
@@ -389,9 +480,8 @@ export const Dashboard: React.FC = () => {
                                     0
                                 }
                                 materialType={
-                                    String(shipmentData.sustainability_analysis.processed_data.processed_data
-                                        .material_type || 'N/A')
-                                }
+                                    (shipmentData.sustainability_analysis.processed_data.processed_data.packages as any[])[0].material_type
+                                  }
                             />
                         </div>
                     )}
@@ -439,9 +529,9 @@ export const Dashboard: React.FC = () => {
                                         <Radar
                                             name="Importance"
                                             dataKey="importance"
-                                            stroke="#8884d8"
-                                            fill="#8884d8"
-                                            fillOpacity={0.6}
+                                            stroke="#4caf50"
+                                            fill="#4caf50"
+                                            fillOpacity={0.8}
                                         />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: '#000' }}
@@ -454,78 +544,73 @@ export const Dashboard: React.FC = () => {
 
                             {/* Sustainability Scores */}
                             <ChartWrapper title="Sustainability Scores">
-                                <ResponsiveContainer width="100%" height={400}>
-                                    <BarChart data={chartData.sustainabilityScores}>
-                                        <XAxis dataKey="none" />
-                                        <YAxis domain={[0, 100]} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#000' }}
-                                            labelStyle={{ color: '#fff' }}
-                                            itemStyle={{ color: '#fff' }} />
-                                        <Legend />
-                                        <Bar
-                                            dataKey="actual"
-                                            fill="#8884d8"
-                                            name="Actual Score"
-                                        />
-                                        <Bar
-                                            dataKey="predicted"
-                                            fill="#82ca9d"
-                                            name="Predicted Score"
-                                        />
-                                    </BarChart>
+                                <ResponsiveContainer width="100%" height={400} bg-black>
+                                    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                                        <Card style={{ width: '250px', backgroundColor: theme === 'dark' ? 'black' : 'white' }}>
+                                            <CardHeader>
+                                                <CardTitle style={{ color: textColor }}>Actual Score</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ScoreDonutChart score={scoreData.actual} label="Actual Score" textColor={textColor} />
+                                            </CardContent>
+                                        </Card>
+                                        <Card style={{ width: '250px', backgroundColor: theme === 'dark' ? 'black' : 'white' }}>
+                                            <CardHeader>
+                                                <CardTitle style={{ color: textColor }}>Predicted Score</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ScoreDonutChart score={scoreData.predicted} label="Predicted Score" textColor={textColor} />
+                                            </CardContent>
+                                        </Card>
+                                    </div>
                                 </ResponsiveContainer>
                             </ChartWrapper>
 
                             {/* Sustainability Metrics */}
                             <ChartWrapper title="Sustainability Metrics">
-                                    <ResponsiveContainer width="100%" height={400}>
-                                        <AreaChart
-                                            data={chartData.sustainabilityMetrics}
-                                            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                                        >
-                                            <XAxis dataKey="none" />
-                                            <YAxis domain={[0, 100]} />
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: '#000' }}
-                                                labelStyle={{ color: '#fff' }}
-                                                itemStyle={{ color: '#fff' }}
-                                            />
-                                            <Legend />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="carbon_footprint"
-                                                stackId="1"
-                                                stroke="#8884d8"
-                                                fill="#8884d8"
-                                                name="Carbon Footprint"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="energy_efficiency"
-                                                stackId="1"
-                                                stroke="#82ca9d"
-                                                fill="#82ca9d"
-                                                name="Energy Efficiency"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="resource_efficiency"
-                                                stackId="1"
-                                                stroke="#ffc658"
-                                                fill="#ffc658"
-                                                name="Resource Efficiency"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="waste_reduction"
-                                                stackId="1"
-                                                stroke="#ff8042"
-                                                fill="#ff8042"
-                                                name="Waste Reduction"
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <BarChart
+                                        data={chartData.sustainabilityMetrics}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="timestamp" />
+                                        <YAxis domain={[0, 100]} />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: theme === 'dark' ? '#000' : '#fff',
+                                                border: '1px solid #ccc'
+                                            }}
+                                            labelStyle={{ color: theme === 'dark' ? '#fff' : '#000' }}
+                                            itemStyle={{ color: theme === 'dark' ? '#fff' : '#000' }}
+                                        />
+                                        <Legend />
+                                        <Bar
+                                            dataKey="carbon_footprint"
+                                            name="Carbon Footprint"
+                                            fill="#8884d8"
+                                            radius={[4, 4, 0, 0]}
+                                        />
+                                        <Bar
+                                            dataKey="energy_efficiency"
+                                            name="Energy Efficiency"
+                                            fill="#82ca9d"
+                                            radius={[4, 4, 0, 0]}
+                                        />
+                                        <Bar
+                                            dataKey="resource_efficiency"
+                                            name="Resource Efficiency"
+                                            fill="#ffc658"
+                                            radius={[4, 4, 0, 0]}
+                                        />
+                                        <Bar
+                                            dataKey="waste_reduction"
+                                            name="Waste Reduction"
+                                            fill="#ff8042"
+                                            radius={[4, 4, 0, 0]}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </ChartWrapper>
                         </div>
                     )}
