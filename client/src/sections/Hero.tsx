@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Paperclip, ArrowUp, RefreshCcw } from 'lucide-react';
+import { Paperclip, ArrowUp, RefreshCcw, Image } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/supabase';
 import { Sidebar } from '@/sections/Sidebar';
@@ -27,6 +27,7 @@ export const Hero: React.FC = () => {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const [accessToken, setAccessToken] = useState<string | null>(null); const { theme } = useTheme();
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const sustainabilityTopics: ChatTopic[] = [
         {
@@ -147,6 +148,17 @@ export const Hero: React.FC = () => {
             setError('Failed to create a new session.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            // Handle image upload logic here
+            console.log('Image uploaded:', files[0]);
+            // Reset input
+            event.target.value = '';
         }
     };
 
@@ -514,7 +526,15 @@ export const Hero: React.FC = () => {
                                             className={`w-full ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-200 text-black'} border pl-4 pr-20 py-3 focus:outline-none focus:border-primary`}
                                             disabled={isLoading}
                                         />
+
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-4">
+                                        <button
+        onClick={() => imageInputRef.current?.click()}
+        className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
+        aria-label="Upload Image"
+    >
+        <Image className="w-5 h-5" />
+    </button>
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
                                                 className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
@@ -542,6 +562,14 @@ export const Hero: React.FC = () => {
                             ref={fileInputRef}
                             disabled={isLoading}
                         />
+                        <input
+        type="file"
+        ref={imageInputRef}
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImageUpload}
+        aria-label="Image upload input"
+    />
                         {isLoading}
                     </div>
                 </>

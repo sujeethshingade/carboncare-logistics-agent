@@ -436,7 +436,7 @@ export const Dashboard: React.FC = () => {
                         <Button
                             size="icon"
                             onClick={() => setIsOpen(false)}
-                            className={`h-8 w-8 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-primary hover:bg-black transition-colors duration-300`}
+                            className={`h-8 w-8 rounded-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} hover:text-primary hover:${theme === 'dark' ? 'bg-black' : 'bg-white'} transition-colors duration-300`}
                         >
                             <X className="h-5 w-5" />
                         </Button>
