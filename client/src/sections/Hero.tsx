@@ -1,3 +1,5 @@
+// Hero.tsx
+
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +7,7 @@ import { Paperclip, ArrowUp, RefreshCcw, Image } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/supabase';
 import { Sidebar } from '@/sections/Sidebar';
-import { Dashboard } from '@/sections/Dashboard'
+import { Dashboard } from '@/sections/Dashboard';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/Context/ThemeContext';
 import { toast } from '@/components/ui/use-toast';
@@ -13,6 +15,29 @@ import { toast } from '@/components/ui/use-toast';
 type ChatTopic = {
     title: string;
     prompt: string;
+};
+
+// LoadingSpinner Component for Animation
+const LoadingSpinner: React.FC = () => {
+    return (
+        <span className="ml-2 inline-block">
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                ></circle>
+                <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+            </svg>
+        </span>
+    );
 };
 
 export const Hero: React.FC = () => {
@@ -24,10 +49,11 @@ export const Hero: React.FC = () => {
     const [user, setUser] = useState<any>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const [accessToken, setAccessToken] = useState<string | null>(null); const { theme } = useTheme();
-    const imageInputRef = useRef<HTMLInputElement>(null);
+    const { theme } = useTheme();
+    const [accessToken, setAccessToken] = useState<string | null>(null);
 
     const sustainabilityTopics: ChatTopic[] = [
         {
@@ -151,7 +177,6 @@ export const Hero: React.FC = () => {
         }
     };
 
-
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files && files.length > 0) {
@@ -247,10 +272,11 @@ export const Hero: React.FC = () => {
             console.error('Error processing topic:', err);
         } finally {
             setIsLoading(false);
+            scrollToBottom();
         }
     };
 
-    // In Hero.tsx, update the handleSendMessage function:
+    // Updated handleSendMessage Function with Loading Animation
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || isLoading) return;
 
@@ -280,7 +306,14 @@ export const Hero: React.FC = () => {
             // Clear input right after sending
             setInputMessage('');
 
-            // Send the message to the backend
+            // Add agent's "Processing your request..." message with loading animation
+            const processingMessage = { text: 'Processing your request...', type: 'agent' as const };
+            setMessages(prev => [...prev, processingMessage]);
+
+            // Save processing message to database
+            await saveMessagesToDatabase([processingMessage]);
+
+            // Simulate sending the message to the backend
             const response = await fetch('http://localhost:5000/api/v1/chat', {
                 method: 'POST',
                 headers: {
@@ -299,12 +332,18 @@ export const Hero: React.FC = () => {
 
             const data = await response.json();
 
-            // Add the agent's response to the messages
-            const agentMessage = { text: data.reply, type: 'agent' as const };
-            setMessages(prev => [...prev, agentMessage]);
+            // Replace the "Processing your request..." message with the actual response
+            const finalAgentMessage = { text: data.reply, type: 'agent' as const };
+            setMessages(prev =>
+                prev.map(msg =>
+                    msg.type === 'agent' && msg.text === 'Processing your request...'
+                        ? finalAgentMessage
+                        : msg
+                )
+            );
 
             // Save agent message to database
-            await saveMessagesToDatabase([agentMessage]);
+            await saveMessagesToDatabase([finalAgentMessage]);
 
         } catch (err) {
             console.error('Error handling message:', err);
@@ -317,6 +356,7 @@ export const Hero: React.FC = () => {
             await saveMessagesToDatabase([errorMessage]);
         } finally {
             setIsLoading(false);
+            scrollToBottom();
         }
     };
 
@@ -325,7 +365,6 @@ export const Hero: React.FC = () => {
             setSelectedFile(event.target.files[0]);
         }
     };
-
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -504,9 +543,16 @@ export const Hero: React.FC = () => {
                                                             }}
                                                         >
                                                             {message.type === 'agent' ? (
-                                                                <ReactMarkdown>
-                                                                    {message.text}
-                                                                </ReactMarkdown>
+                                                                message.text === 'Processing your request...' ? (
+                                                                    <span className="flex items-center">
+                                                                        Processing your request
+                                                                        <LoadingSpinner />
+                                                                    </span>
+                                                                ) : (
+                                                                    <ReactMarkdown>
+                                                                        {message.text}
+                                                                    </ReactMarkdown>
+                                                                )
                                                             ) : (
                                                                 message.text
                                                             )}
@@ -528,13 +574,13 @@ export const Hero: React.FC = () => {
                                         />
 
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-4">
-                                        <button
-        onClick={() => imageInputRef.current?.click()}
-        className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
-        aria-label="Upload Image"
-    >
-        <Image className="w-5 h-5" />
-    </button>
+                                            <button
+                                                onClick={() => imageInputRef.current?.click()}
+                                                className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
+                                                aria-label="Upload Image"
+                                            >
+                                                <Image className="w-5 h-5" />
+                                            </button>
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
                                                 className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
@@ -552,6 +598,9 @@ export const Hero: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Vertical Text Below Chat History */}
+                                
                             </CardContent>
                         </Card>
                         <input
@@ -563,14 +612,14 @@ export const Hero: React.FC = () => {
                             disabled={isLoading}
                         />
                         <input
-        type="file"
-        ref={imageInputRef}
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleImageUpload}
-        aria-label="Image upload input"
-    />
-                        {isLoading}
+                            type="file"
+                            ref={imageInputRef}
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={handleImageUpload}
+                            aria-label="Image upload input"
+                        />
+                        {/* Vertical Text Below Analytics Dashboard */}
                     </div>
                 </>
             ) : (
@@ -580,6 +629,7 @@ export const Hero: React.FC = () => {
             )}
         </div>
     );
+
 };
 
 export default Hero;
