@@ -381,27 +381,6 @@ export const Hero: React.FC = () => {
 
             const result = await response.json();
 
-            const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('User not authenticated');
-
-        const filePath = `${user.id}/${currentSessionId}/${file.name}`;
-        const { error: uploadError } = await supabase.storage
-            .from('chat-files')
-            .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { error: dbError } = await supabase
-            .from('session_files')
-            .insert({
-                session_id: currentSessionId,
-                file_name: file.name,
-                file_path: filePath,
-                file_type: file.type
-            });
-
-        if (dbError) throw dbError;
-
             toast({
                 title: "Success",
                 description: "File uploaded and processed successfully",
