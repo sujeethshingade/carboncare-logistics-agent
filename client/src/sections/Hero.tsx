@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Paperclip, ArrowUp, RefreshCcw, Image } from 'lucide-react';
+import { Paperclip, ArrowUp, RefreshCcw} from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/supabase';
 import { Sidebar } from '@/sections/Sidebar';
@@ -378,7 +378,7 @@ export const Hero: React.FC = () => {
                 } catch (e) { }
                 throw new Error(errorMessage);
             }
-            
+
             const result = await response.json();
 
             toast({
@@ -528,13 +528,6 @@ export const Hero: React.FC = () => {
                                         />
 
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-4">
-                                        <button
-        onClick={() => imageInputRef.current?.click()}
-        className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
-        aria-label="Upload Image"
-    >
-        <Image className="w-5 h-5" />
-    </button>
                                             <button
                                                 onClick={() => fileInputRef.current?.click()}
                                                 className={`transition-colors duration-300 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
@@ -562,14 +555,6 @@ export const Hero: React.FC = () => {
                             ref={fileInputRef}
                             disabled={isLoading}
                         />
-                        <input
-        type="file"
-        ref={imageInputRef}
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleImageUpload}
-        aria-label="Image upload input"
-    />
                         {isLoading}
                     </div>
                 </>

@@ -85,6 +85,7 @@ interface KpiCardPropsType {
     icon: React.ReactNode;
     description?: string;
 }
+
 const KpiCard: React.FC<KpiCardPropsType> = ({
     title,
     value,
@@ -461,7 +462,7 @@ export const Dashboard: React.FC = () => {
                     {shipmentData?.llm_insights && (
                         <Card
                             className={`${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'
-                                } mb-4 mt-8 border-none`}
+                                } mb-4 mt-8 border-none rounded-none`}
                         >
 
                             <ScrollArea className="h-[300px] w-full rounded-none border p-4">
