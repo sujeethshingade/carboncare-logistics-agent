@@ -1,1 +1,8 @@
-Flask==3.0.3
+flask
+huggingface_hub
+pandas
+python-dotenv
+supabase
+jwt
+flask_cors
+scikit-learn
