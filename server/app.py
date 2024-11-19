@@ -344,8 +344,12 @@ def analyze_shipment():
 def train_model():
     """Train the sustainability predictor with historical data"""
     try:
-        json_file_path = os.path.join('/home/mayankch283/carboncare-logistics-agent/uploads', 'uploaded_data.json')
+        upload_dir = os.getenv('UPLOAD_DIR', '/tmp/uploads')
+        json_file_path = os.path.join(upload_dir, 'uploaded_data.json')
         
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+            
         if not os.path.exists(json_file_path):
             app.logger.error(f"File not found: {json_file_path}")
             return jsonify({'error': 'No uploaded data found for training'}), 404
